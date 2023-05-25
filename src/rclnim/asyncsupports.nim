@@ -1,19 +1,17 @@
 import utils, handles, init, contexts, publishers, subscriptions, services, clients, waitsets
 import std/[asyncdispatch, sets, locks, sequtils, tables, options]
-import concurrent/[smartptrs, isolatedclosures, channels, threaddestructors]
+import concurrent/[smartptrs, channels, threaddestructors]
 
 
 type
   CommandKind = enum
     Add
-    Remove
     Stop
 
   Command = object
     case kind: CommandKind
-    of Add, Remove:
+    of Add:
       waitable: Waitable
-      onReadyCallback: proc() {.isolatedClosure.}
     of Stop:
       discard
   
@@ -37,8 +35,6 @@ type
     thread: Thread[ptr AsyncWaitSet]
     shutdown: bool
 
-  # AsyncWaitSet* = ref AsyncWaitSetObj
-
   ShutdownError* = object of CatchableError
 
 var gAsyncWaitSet {.threadvar.}: AsyncWaitSet
@@ -61,34 +57,33 @@ addThreadDestructor() do():
     `=destroy`(gAsyncWaitSet)
 
 proc waitLoop(self: ptr AsyncWaitSet) {.thread.} =
-  var waitableCallbackPair: Table[Waitable, proc() {.isolatedClosure.}]
+  var waitables: HashSet[Waitable]
   while true:
     while true:
       var cmd: Command
       if self.commandChannel.tryRecv(cmd):
         case cmd.kind
         of Add:
-          waitableCallbackPair[cmd.waitable] = cmd.onReadyCallback
-        of Remove:
-          waitableCallbackPair.del cmd.waitable
+          waitables.incl cmd.waitable
         of Stop:
           return
       else:
         break
 
-    let res = self.waitSet.wait(waitableCallbackPair.keys.toSeq)
+    let res = self.waitSet.wait(waitables.toSeq)
 
-    case res
+    case res.kind
     of Ready:
-      for callback in waitableCallbackPair.values:
-        callback()
-      self.eventChannel.send(AsyncWaitSetEvent(kind: Ready, waitables: waitableCallbackPair.keys.toSeq))
-      self.event.trigger()
+      if res.readyWaitables.len > 0:
+        for readyWaitable in res.readyWaitables:
+          waitables.excl readyWaitable
+        self.eventChannel.send(AsyncWaitSetEvent(kind: Ready, waitables: res.readyWaitables))
+        self.event.trigger()
     of Shutdown:
       self.eventChannel.send(AsyncWaitSetEvent(kind: Shutdown))
       self.event.trigger()
       return
-    of Timeout, Interrupted:
+    of Timeout:
       discard
 
 proc initThreadAsyncWaitSet(context: Context) =
@@ -121,19 +116,8 @@ proc wait*(waitable: Waitable): Future[void] =
     result.fail(newException(ShutdownError, "context was shutdown"))
     return
   gAsyncWaitSet.waiters[waitable] = result
-  let commandChannelPtr = addr gAsyncWaitSet.commandChannel
-  gAsyncWaitSet.commandChannel.send Command(
-    kind: Add,
-    waitable: waitable,
-    onReadyCallback:
-      proc() {.isolatedClosure.} =
-        commandChannelPtr[].send Command(kind: Remove, waitable: waitable)
-  )
+  gAsyncWaitSet.commandChannel.send Command(kind: Add, waitable: waitable)
   gAsyncWaitSet.waitSet.interrupt()
-
-# template raiseShutdownError: untyped =
-#   raise newException(ShutdownError):
-#     "context was shutdown"
 
 proc recv*[T](self: Subscription[T]): Future[T] {.async.} =
   while true:
@@ -163,55 +147,42 @@ when isMainModule:
 
   randomize()
 
-  importInterface builtin_interfaces/msg/time
   importInterface std_srvs/srv/empty
 
   proc main =
     initRclnim()
 
     let node = newNode("my_node")
-    let sub = node.createSubscription(Time, "my_topic", SystemDefaultQoS)
     let srv = node.createService(Empty, "my_service", ServiceDefaultQoS)
     let cli = node.createClient(Empty, "my_service", ServiceDefaultQoS)
-
-    proc recvTask {.async.} =
-      for i in 0..<1000:
-        echo "ready"
-        let msg = await sub.recv()
-        echo msg
-
-    proc shutdownTask {.async.} =
-      await sleepAsync 1000
-      # getGlobalContext().shutdown()
     
     proc serviceTask {.async.} =
       for i in 0..<10000:
-        # await sleepAsync 100
-        echo "waiting for request"
-        let (req, sender) = await srv.recv()
-        echo "got request ", i
-        # echo req
+        echo "waiting for request ", i
+        let (_, sender) = await srv.recv()
+        echo "got request. sending response"
         sender.send(Empty.Response()())
-        echo "response sent ", i
+        echo "response sent"
         await sleepAsync rand(10)
       echo "service done"
     
     proc clientTask {.async.} =
-      # await sleepAsync 1000
       for i in 0..<10000:
+        echo "sending request ", i
         let receiver = cli.send(Empty.Request()())
-        echo "request sent ", i
-        echo "waiting for response"
-        let resp = await receiver.recv()
-        echo "got response ", i
-        # echo resp
+        echo "request sent. waiting for response"
+        let _ = await receiver.recv()
+        echo "got response"
         await sleepAsync rand(10)
       echo "client done"
 
     proc asyncMain {.async.} =
       await all [serviceTask(), clientTask()]
     
-    waitFor asyncMain()
+    try:
+      waitFor asyncMain()
+    except ShutdownError:
+      echo "shutting down"
 
   main()
 
