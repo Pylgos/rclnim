@@ -1,4 +1,4 @@
-import utils, handles, init, contexts, publishers, subscriptions, services, clients, waitsets
+import ./[utils, handles, init, contexts, publishers, subscriptions, services, clients, waitsets]
 import std/[asyncdispatch, sets, locks, sequtils, tables, options]
 import concurrent/[smartptrs, channels, threaddestructors]
 
@@ -111,10 +111,17 @@ proc prepareThreadAsyncWaitSet(context = getGlobalContext()) =
 
 proc wait*(waitable: Waitable): Future[void] =
   prepareThreadAsyncWaitSet()
-  result = newFuture[void]("asyncsupport.wait")
+
   if gAsyncWaitSet.shutdown:
+    result = newFuture[void]("asyncsupport.wait")
     result.fail(newException(ShutdownError, "context was shutdown"))
     return
+  
+  if waitable in gAsyncWaitSet.waiters:
+    result = gAsyncWaitSet.waiters[waitable]
+    return
+  
+  result = newFuture[void]("asyncsupport.wait")
   gAsyncWaitSet.waiters[waitable] = result
   gAsyncWaitSet.commandChannel.send Command(kind: Add, waitable: waitable)
   gAsyncWaitSet.waitSet.interrupt()
@@ -140,51 +147,3 @@ proc recv*[T](self: ClientRecv[T]): Future[T.Response] {.async.} =
       return
     else:
       await self.waitable.wait()
-
-when isMainModule:
-  import ./[nodes, qosprofiles, rosinterfaceimporters]
-  import std/random
-
-  randomize()
-
-  importInterface std_srvs/srv/empty
-
-  proc main =
-    initRclnim()
-
-    let node = newNode("my_node")
-    let srv = node.createService(Empty, "my_service", ServiceDefaultQoS)
-    let cli = node.createClient(Empty, "my_service", ServiceDefaultQoS)
-    
-    proc serviceTask {.async.} =
-      for i in 0..<10000:
-        echo "waiting for request ", i
-        let (_, sender) = await srv.recv()
-        echo "got request. sending response"
-        sender.send(Empty.Response()())
-        echo "response sent"
-        await sleepAsync rand(10)
-      echo "service done"
-    
-    proc clientTask {.async.} =
-      for i in 0..<10000:
-        echo "sending request ", i
-        let receiver = cli.send(Empty.Request()())
-        echo "request sent. waiting for response"
-        let _ = await receiver.recv()
-        echo "got response"
-        await sleepAsync rand(10)
-      echo "client done"
-
-    proc asyncMain {.async.} =
-      await all [serviceTask(), clientTask()]
-    
-    try:
-      waitFor asyncMain()
-    except ShutdownError:
-      echo "shutting down"
-
-  main()
-
-  setGlobalDispatcher(nil)
-  GC_fullCollect()

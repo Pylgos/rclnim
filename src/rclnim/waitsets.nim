@@ -25,7 +25,7 @@ type
 
   Waitable* = SharedPtr[WaitableObj]
 
-  WaitSetObj* {.byref.} = object
+  WaitSetObj* = object
     handle: WaitSetHandle
     interruptCond: GuardConditionHandle
     interruptCondWaitable: Waitable
@@ -154,7 +154,7 @@ proc newWaitSet*(context = getGlobalContext()): WaitSet =
   result.callbackId = context.addPreShutdownCallback do() {.isolatedClosure.}:
     p[].interrupt()
 
-proc handle*(self: WaitSetObj): WaitSetHandle =
+proc handle*(self: var WaitSetObj): WaitSetHandle =
   self.handle
 
 proc lockWaitables(waitables: openArray[Waitable]) =
