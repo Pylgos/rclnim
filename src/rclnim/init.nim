@@ -61,7 +61,7 @@ proc installSignalHandler*() =
   gSignalHandler.threadStopEvent = newSelectEvent()
   gSignalHandler.signalHandlerThread.createThread(signalHandlingThreadProc, addr gSignalHandler)
 
-proc initRclnim*(
+proc init*(
     args =  @[paramStr(0)] & commandLineParams(),
     allocator = getDefaultAllocator()) =
   gContext = newContext(args, allocator)
@@ -70,8 +70,3 @@ proc initRclnim*(
   withLock getRclGlobalLock():
     wrapError rcl_logging_configure(addr gContext.handle.getRclContext().global_arguments, addr rclAlloc)
   gInitialized = true
-
-proc shutdownRclnim*() =
-  getGlobalContext().shutdown()
-  gContext = SharedPtr[Context]()
-  gInitialized = false

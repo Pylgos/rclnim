@@ -2,14 +2,14 @@ discard """
   timeout: 60
 """
 
-import rclnim/[init, nodes, qosprofiles, rosinterfaceimporters, services, clients, asyncsupports]
+import rclnim
 import std/[asyncdispatch, random]
 
 randomize()
 
 importInterface std_srvs/srv/empty
 
-initRclnim()
+rclnim.init()
 
 let node = newNode("my_node")
 let srv = node.createService(Empty, "my_service", ServiceDefaultQoS)

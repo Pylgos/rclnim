@@ -1,8 +1,8 @@
-import rclnim/[init, nodes, publishers, subscriptions, asyncsupports, qosprofiles, rosinterfaceimporters]
+import rclnim
 import std/asyncdispatch
 importInterface builtin_interfaces/msg/time
 
-initRclnim()
+rclnim.init()
 
 let node = newNode("test_node")
 var qos = SystemDefaultQoS

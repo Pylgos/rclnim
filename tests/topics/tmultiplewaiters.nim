@@ -6,7 +6,8 @@ import std/[asyncdispatch]
 import rclnim
 importInterface builtin_interfaces/msg/time
 
-initRclnim()
+rclnim.init()
+
 let
   node = newNode("t_multiple_waiters")
   qos = SystemDefaultQoS.withPolicies(reliability = Reliable)
