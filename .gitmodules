@@ -1,0 +1,6 @@
+[submodule "src/rclnim/private/deps/npeg"]
+	path = src/rclnim/private/deps/npeg
+	url = https://github.com/zevv/npeg.git
+[submodule "src/rclnim/private/deps/nint128"]
+	path = src/rclnim/private/deps/nint128
+	url = https://github.com/rockcavera/nim-nint128.git

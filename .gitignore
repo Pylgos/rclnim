@@ -1,3 +1,12 @@
-nimcache/
-nimblecache/
-htmldocs/
+*
+!/**/
+!*.*
+
+/testresults
+/tests/megatest.nim
+/nimcache
+/nimblecache
+/htmldocs
+
+/outputExpected.txt
+/outputGotten.txt

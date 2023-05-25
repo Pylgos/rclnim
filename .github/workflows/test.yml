@@ -1,0 +1,27 @@
+name: Test
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: ros:humble-ros-base
+
+    steps:
+    - run: |
+        apt-get update -y
+        apt-get install -y wget gcc libclang-dev ros-humble-rcl ros-humble-builtin-interfaces ros-humble-std-srvs
+        wget -O /tmp/choosenim-init.sh https://nim-lang.org/choosenim/init.sh
+        sh /tmp/choosenim-init.sh -y
+        echo ~/.nimble/bin >> $GITHUB_PATH
+        ~/.nimble/bin/choosenim devel
+
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - run: ln -s /usr/lib/llvm-14/lib/libclang.so /usr/lib/libclang.so
+    - run: git config --global --add safe.directory /__w/rclnim/rclnim
+    - run: nimble install -y --verbose
+    - run: source /opt/ros/humble/setup.bash && ./run_test.sh
+      shell: bash
