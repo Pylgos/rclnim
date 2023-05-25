@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-testament --megatest:off all
+ROS_LOCALHOST_ONLY=1 testament --megatest:off all

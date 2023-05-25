@@ -35,13 +35,21 @@ type
 
   WaitSet* = SharedPtr[WaitSetObj]
 
-  WaitResult* = enum
+  WaitResultKind* = enum
     Ready
-    Interrupted
     Shutdown
     Timeout
+  
+  WaitResult* = object
+    case kind*: WaitResultKind
+    of Ready:
+      readyWaitables*: seq[Waitable]
+    else:
+      discard
 
   AlreadyWaitingDefect* = object of Defect
+
+  WaitableIdxPairSeq = seq[tuple[waitable: Waitable, idx: int]]
 
 exportDerefConverter Waitable
 exportDerefConverter WaitSet
@@ -74,29 +82,53 @@ proc count*(waitables: openArray[Waitable]): tuple[guardConditions, subscription
     of WaitableKind.Client:
       inc result.clients
 
-proc addToRclWaitSet(waitSet: ptr rcl_wait_set_t, waitable: Waitable) =
+proc addToRclWaitSet(waitSet: ptr rcl_wait_set_t, waitable: Waitable): int =
+  var idx: csize_t
   case waitable.kind
   of WaitableKind.GuardCondition:
-    wrapError rcl_wait_set_add_guard_condition(waitSet, waitable.guardCondition.getRclGuardCondition(), nil)
+    wrapError rcl_wait_set_add_guard_condition(waitSet, waitable.guardCondition.getRclGuardCondition(), addr idx)
   of WaitableKind.Subscription:
-    wrapError rcl_wait_set_add_subscription(waitSet, waitable.subscription.getRclSubscription(), nil)
+    wrapError rcl_wait_set_add_subscription(waitSet, waitable.subscription.getRclSubscription(), addr idx)
   of WaitableKind.Service:
-    wrapError rcl_wait_set_add_service(waitSet, waitable.service.getRclService(), nil)
+    wrapError rcl_wait_set_add_service(waitSet, waitable.service.getRclService(), addr idx)
   of WaitableKind.Client:
-    wrapError rcl_wait_set_add_client(waitSet, waitable.client.getRclClient(), nil)
+    wrapError rcl_wait_set_add_client(waitSet, waitable.client.getRclClient(), addr idx)
+  result = idx.int
 
-proc fillWaitSet(waitSet: WaitSetHandle, waitables: openArray[Waitable]) =
+proc fillWaitSet(self: WaitSet, waitables: openArray[Waitable]): WaitableIdxPairSeq =
   let c = waitables.count()
   wrapError rcl_wait_set_resize(
-    waitSet.getRclWaitSet(),
+    self.handle.getRclWaitSet(),
     csize_t c.subscriptions,
-    csize_t c.guardConditions,
+    csize_t c.guardConditions + 1,
     csize_t 0,
     csize_t c.clients,
     csize_t c.services,
     csize_t 0)
+  discard addToRclWaitSet(self.handle.getRclWaitSet(), self.interruptCondWaitable)
   for waitable in waitables:
-    addToRclWaitSet(waitSet.getRclWaitSet(), waitable)
+    let idx = addToRclWaitSet(self.handle.getRclWaitSet(), waitable)
+    result.add (waitable, idx)
+
+template ptrAsArray[T](p: ptr T): ptr UncheckedArray[T] =
+  cast[ptr UncheckedArray[T]](p)
+
+proc getReadyWaitables(waitSet: ptr rcl_wait_set_t, waitableIdxPair: WaitableIdxPairSeq): seq[Waitable] =
+  for (waitable, idx) in waitableIdxPair:
+    var isReady = false
+
+    case waitable.kind
+    of WaitableKind.Subscription:
+      isReady = waitSet.subscriptions.ptrAsArray[idx] != nil
+    of WaitableKind.GuardCondition:
+      isReady = waitSet.guard_conditions.ptrAsArray[idx] != nil
+    of WaitableKind.Client:
+      isReady = waitSet.clients.ptrAsArray[idx] != nil
+    of WaitableKind.Service:
+      isReady = waitSet.services.ptrAsArray[idx] != nil
+
+    if isReady:
+      result.add waitable
 
 proc `=destroy`(self: var WaitSetObj) =
   if self.handle != nil:
@@ -148,7 +180,6 @@ proc lockWaitables(waitables: openArray[Waitable]) =
       waitable.service.getLock().acquire()
     else:
       discard
-  
 
 proc unlockWaitables(waitables: openArray[Waitable]) =
   for waitable in waitables:
@@ -165,13 +196,14 @@ proc unlockWaitables(waitables: openArray[Waitable]) =
 
 proc wait*(self: WaitSet, waitables: openArray[Waitable], timeout = none(Duration)): WaitResult =
   var ret: rcl_ret_t
-  var interrupted = false
 
   lockWaitables(waitables)
   defer: unlockWaitables(waitables)
 
+  var waitableIdxPair: WaitableIdxPairSeq
+
   withLock getRclGlobalLock():
-    self.handle.fillWaitSet(@waitables & self.interruptCondWaitable)
+    waitableIdxPair = self.fillWaitSet(waitables)
   
   let timeoutNs =
     if timeout.isSome:
@@ -180,18 +212,16 @@ proc wait*(self: WaitSet, waitables: openArray[Waitable], timeout = none(Duratio
       -1
   
   ret = rcl_wait(self.handle.getRclWaitSet(), timeoutNs)
-  interrupted = self.interrupted.exchange(false)
+
+  var readyWaitables = getReadyWaitables(self.handle.getRclWaitSet(), waitableIdxPair)
 
   case ret
   of RCL_RET_OK:
-    if interrupted:
-      if self.context.isShuttingDown:
-        result = Shutdown
-      else:
-        result = Interrupted
+    if self.context.isShuttingDown:
+      result = WaitResult(kind: Shutdown)
     else:
-      result = Ready
+      result = WaitResult(kind: Ready, readyWaitables: readyWaitables)
   of RCL_RET_TIMEOUT:
-    result = Timeout
+    result = WaitResult(kind: Timeout)
   else:
     wrapError ret
