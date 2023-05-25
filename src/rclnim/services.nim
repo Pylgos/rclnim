@@ -51,7 +51,7 @@ proc takeRequest*[T: SomeService](self: Service[T], req: var T.Request): Option[
       ret = rcl_take_request_with_info(self[].handle.getRclService(), addr info, addr cReq)
   case ret
   of RCL_RET_OK:
-    cMessageToNim(req, cReq)
+    cMessageToNim(cReq, req)
     result = some ServiceSend[T](
       service: self,
       requestId: info.request_id

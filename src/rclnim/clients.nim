@@ -64,7 +64,7 @@ proc takeResponse*[T](self: ClientRecv[T], resp: var T.Response): bool =
   doAssert info.request_id.sequence_number == self.sequenceNum
   case ret
   of RCL_RET_OK:
-    cMessageToNim(resp, cResp)
+    cMessageToNim(cResp, resp)
     result = true
   of RCL_RET_CLIENT_TAKE_FAILED:
     result = false

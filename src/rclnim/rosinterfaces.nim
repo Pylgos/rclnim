@@ -1,4 +1,5 @@
-import std/macros
+import std/[macros, strformat, typetraits]
+import system/ansi_c
 
 template isRosMessageType*(T: typedesc): bool =
   false
@@ -28,11 +29,12 @@ proc `=destroy`[T](s: var CMessageSequence[T]) =
   if s.data == nil: return
   for i in 0..<s.size:
     `=destroy`(s.data[i])
-  deallocShared(s.data)
+  c_free(s.data)
+  s.data = nil
 
 proc initCMessageSequence[T](size: Natural): CMessageSequence[T] =
   if size != 0:
-    result.data = cast[ptr UncheckedArray[T]](createShared(T, size))
+    result.data = cast[ptr UncheckedArray[T]](c_malloc(csize_t(sizeof(T) * size)))
     result.capacity = size.csize_t
   result.size = size.csize_t
 
@@ -41,6 +43,9 @@ proc `[]`*[T](s: CMessageSequence[T], idx: int): var T =
 
 proc `[]=`*[T](s: CMessageSequence[T], idx: int, e: sink T) =
   s.data[idx] = e
+
+proc len*[T](s: CMessageSequence[T]): int =
+  s.size.int
 
 macro accessField(obj: object, name: string): untyped =
   newDotExpr(obj, newIdentNode(name.strVal))
@@ -68,27 +73,30 @@ proc nimMessageToC*[T, U](src: T, dest: var U) =
   else:
     static: doAssert false
 
-proc cMessageToNim*[T, U](dest: var T, src: U) =
+proc cMessageToNim*[T, U](src: T, dest: var U) =
   when T is U:
     dest = src
   
-  elif src is CMessageSequence and dest is seq:
-    dest = newSeq[dest.T](src.len)
+  elif T is CMessageSequence and U is seq:
+    static:
+      echo T, " ", U
+    dest = newSeq[dest.elementType](src.len)
     if src.len == 0: return
-    for i, v in dest.mitems:
-      v.cMessageToNim(src[i])
+    for i in 0..<src.len:
+      cMessageToNim(src[i], dest[i])
   
-  elif src is CMessageSequence[cchar] and dest is string:
+  elif T is CMessageSequence[cchar] and U is string:
     dest = newString(src.len)
-    for c in src:
-      dest[i] = c
+    for i in 0..<src.len:
+      dest[i] = src[i]
 
-  elif src is object and dest is object:
+  elif T is object and U is object:
     for name, value in src.fieldPairs:
-      dest.accessField(name).cMessageToNim(value)
+      cMessageToNim(value, dest.accessField(name))
 
   else:
-    static: doAssert false
+    static:
+      error fmt"cannot convert {$T} to {$U}"
 
 
 when isMainModule:

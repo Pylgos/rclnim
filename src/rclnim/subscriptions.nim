@@ -42,7 +42,7 @@ proc take*[T](self: SubscriptionObj[T], msg: var T): bool =
     ret = rcl_take(self.handle[].getRclSubscription(), addr cMsg, nil, nil)
   case ret
   of RCL_RET_OK:
-    cMessageToNim(msg, cMsg)
+    cMessageToNim(cMsg, msg)
     result = true
   of RCL_RET_SUBSCRIPTION_TAKE_FAILED:
     result = false

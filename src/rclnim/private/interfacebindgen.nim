@@ -96,7 +96,7 @@ proc toCType(t: Type): string =
   of tkI32: "int32"
   of tkI64: "int64"
   of tkStr: fmt"module_rclnim_rosinterfaces.CMessageSequence[char]"
-  of tkObject: fmt"{mangledTypeName(t.packageName, t.typeName)}.CMessageType"
+  of tkObject: fmt"{mangledTypeName(t.packageName, t.typeName)}.CType"
   of tkFixedArray: fmt"array[{t.length}, {t.elemType[].toCType}]"
   of tkBoundedArray, tkUnboundedArray: fmt"module_rclnim_rosinterfaces.CMessageSequence[{t.elemType[].toCType}]"
 
