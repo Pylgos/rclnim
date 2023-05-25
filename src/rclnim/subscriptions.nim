@@ -48,14 +48,3 @@ proc take*[T](self: SubscriptionObj[T], msg: var T): bool =
     result = false
   else:
     wrapError ret
-
-when isMainModule:
-  import ./[init, rosinterfaceimporters]
-  importInterface builtin_interfaces/msg/time
-  initRclnim()
-  let node = newNode("test_node")
-  let sub = node.createSubscription(Time, "test_topic", SystemDefaultQoS)
-  while true:
-    var msg: Time
-    if sub.take(msg):
-      echo msg

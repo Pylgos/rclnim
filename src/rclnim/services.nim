@@ -65,19 +65,3 @@ proc send*[T: SomeService](self: ServiceSend[T], resp: T.Response) =
   var cResp: T.Response.CType
   nimMessageToC(resp, cResp)
   wrapError rcl_send_response(self.service[].handle.getRclService(), addr self.requestId, addr cResp)
-
-when isMainModule:
-  import ./interfaceimporters
-  import init, contexts
-  importInterface std_srvs/srv/empty
-  initRclnim()
-  let node = newNode("test_node")
-  let srv = node.createService(Empty, "test_service", ServiceDefaultQoS)
-  while getGlobalContext().isValid:
-    var req: Empty.Request
-    let sender = srv.takeRequest(req)
-    if sender.isSome:
-      echo "got request"
-      echo "sending response"
-      sender.get().send(Empty.Response()())
-  echo "done"

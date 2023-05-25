@@ -5,7 +5,6 @@ import std/locks
 type
   ContextHandleObj* = object
     initialized: bool
-    # lock: Lock
     rclContext: rcl_context_t
 
   GuardConditionHandleObj* = object
@@ -15,25 +14,21 @@ type
 
   WaitSetHandleObj* = object
     initialized: bool
-    # lock: Lock
     context: ContextHandle
     rclWaitSet: rcl_wait_set_t
 
   NodeHandleObj* = object
     initialized: bool
-    # lock: Lock
     context: ContextHandle
     rclNode: rcl_node_t
 
   SubscriptionHandleObj* = object
     initialized: bool
-    # lock: Lock
     node: NodeHandle
     rclSubscription: rcl_subscription_t
 
   PublisherHandleObj* = object
     initialized: bool
-    # lock: Lock
     node: NodeHandle
     rclPublisher: rcl_publisher_t
 

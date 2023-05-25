@@ -70,20 +70,3 @@ proc takeResponse*[T](self: ClientRecv[T], resp: var T.Response): bool =
     result = false
   else:
     wrapError ret
-
-when isMainModule:
-  import ./[rosinterfaceimporters, init, contexts]
-  importInterface std_srvs/srv/empty
-  initRclnim()
-  let node = newNode("test_node")
-  let cli = node.createClient(Empty, "test_service", ServiceDefaultQoS)
-  while getGlobalContext().isValid:
-    var req: Empty.Request
-    let receiver = cli.sendRequest(req)
-    echo "request sent"
-    while getGlobalContext().isValid:
-      var resp: Empty.Response
-      if receiver.takeResponse(resp):
-        echo resp
-        break
-  echo "done"

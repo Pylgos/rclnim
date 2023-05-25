@@ -34,15 +34,3 @@ proc publish*[T](pub: var PublisherObj[T], msg: T) =
   var cMsg: T.CType
   nimMessageToC(msg, cMsg)
   wrapError rcl_publish(pub.handle.getRclPublisher(), addr cMsg, nil)
-
-when isMainModule:
-  import ./[interfaceimporters, init]
-
-  importInterface builtin_interfaces/msg/time
-
-  initRclnim()
-  let node = newNode("test_node")
-  let pub = node.createPublisher(Time, "my_topic", SystemDefaultQoS)
-  while true:
-    let t = Time.init(1, 2)
-    pub.publish(t)

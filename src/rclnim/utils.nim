@@ -55,20 +55,3 @@ macro getCurrentProcName*(): untyped =
   newCall(bindSym"getProcNameAux"):
     quote do:
       var dummy: int
-
-when isMainModule:
-  type Something = object
-    f1: string
-    f2: int
-  
-  proc initSomething(): Something {.initProc.} =
-    discard
-
-  echo Something.init()
-
-  proc someProc() =
-    echo getProcName()
-  
-  someProc()
-
-  echo getProcName()

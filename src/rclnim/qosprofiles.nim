@@ -1,4 +1,4 @@
-import rcl, utils, rostimes, errors
+import rcl, utils, rostimes
 import std/times
 
 {.experimental: "overloadableEnums".}
