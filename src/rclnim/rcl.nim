@@ -3,8 +3,9 @@ import rospkgfinder
 
 static:
   configureRosPackage("rcl")
-  configureRosPackage("rmw")
   configureRosPackage("rcutils")
+  configureRosPackage("rmw")
+  configureRosPackage("rosidl_runtime_c")
 
 const rmwHasBestAvailableQoS* = false
 
