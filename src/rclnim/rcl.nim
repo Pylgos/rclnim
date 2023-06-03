@@ -1,13 +1,12 @@
 import std/[strutils, locks]
-import cpkgfinder
+import rospkgfinder
 
-const rclPkg = findCPackage("rcl")
-{.passL: rclPkg.linkerArgs.join(" ").}
-{.passC: rclPkg.compilerArgs.join(" ").}
+static:
+  configureRosPackage("rcl")
+  configureRosPackage("rmw")
+  configureRosPackage("rcutils")
 
-const
-  rclVersion* = rclPkg.version
-  rmwHasBestAvailableQoS* = false
+const rmwHasBestAvailableQoS* = false
 
 import distro/humble
 
