@@ -33,15 +33,15 @@ const rcutilsIncludeDir = block:
   doAssert res != ""
   res
 
-proc renameCallback(name, kind, partof: string): string =
-  result = name
-  while result.endsWith("_"):
-    result.removeSuffix("_")
-  while result.startsWith("_"):
-    result.removePrefix("_")
-  while result.find("__") != -1:
-    result = result.replace("__", "_")
-  result = "!" & result
+# proc renameCallback(name, kind, partof: string): string =
+#   result = name
+#   while result.endsWith("_"):
+#     result.removeSuffix("_")
+#   while result.startsWith("_"):
+#     result.removePrefix("_")
+#   while result.find("__") != -1:
+#     result = result.replace("__", "_")
+#   result = "!" & result
 
 macro myImportC(compilerArgs: static openArray[string], args: untyped): untyped =
   for carg in compilerArgs.join(" ").replace("-isystem ", "-I").splitWhitespace():
@@ -52,13 +52,12 @@ macro myImportC(compilerArgs: static openArray[string], args: untyped): untyped 
   quote do:
     importc(`args`)
 
-
 myImportC(rclPkg.compilerArgs):
-  outputPath getProjectPath()/"src/rclnim/distro/humble.nim"
+  outputPath getProjectPath()/../"src/rclnim/distro/humble.nim"
   path rclIncludeDir
   path rmwIncludeDir
   path rcutilsIncludeDir
-  renameCallback renameCallback
+  keepCase()
   "rcl/init.h"
   "rcl/node.h"
   "rcl/publisher.h"

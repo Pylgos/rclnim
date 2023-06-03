@@ -12,9 +12,3 @@ namedBin      = {"rclnim/private/importinterfacehelper": "_rclnim_import_interfa
 
 requires "nim >= 1.6"
 requires "https://github.com/Pylgos/nim-concurrent.git"
-
-# when declared(taskRequires):
-#   teakRequires "https://github.com/Pylgos/futhark#rename-callback-escape-hatch"
-
-task generateBindings, "Generate rcl bindings using Futhark.":
-  selfExec("c --compileOnly -d:nodeclguards -d:futharkRebuild ./gen.nim")
