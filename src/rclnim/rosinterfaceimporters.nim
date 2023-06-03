@@ -1,14 +1,27 @@
 import std/[os, macros, compilesettings, strformat]
 
-proc parseImportStmt(n: NimNode): tuple[pkgName, typeName, kind: string, alias: NimNode] =
+proc parseImportStmt(n: NimNode): tuple[pkgName, kind: string, typeNames: seq[string], alias: NimNode] =
   if n.kind == nnkInfix and eqIdent(n[0], "as"):
     result = parseImportStmt(n[1])
     result.alias = n[2]
   else:
     result.pkgName = $n[1][1]
     result.kind = $n[1][2]
-    result.typeName = $n[2]
+    case n[2].kind:
+    of nnkBracket:
+      for typeNameNode in n[2]:
+        if typeNameNode.kind == nnkIdent:
+          result.typeNames.add $typeNameNode
+        else:
+          error("invalid syntax", typeNameNode)
+    of nnkIdent:
+      result.typeNames = @[$n[2]]
+    else:
+      error("invalid syntax", n[2])
     result.alias = nil
+  
+  if result.typeNames.len != 1 and result.alias != nil:
+    error("alias names are not allowed when importing multiple interfaces at the same time", result.alias)
 
 proc getBindingDir(): string =
   querySetting(SingleValueSetting.nimcacheDir)/"ros2_interface_bindings"
@@ -35,24 +48,30 @@ const helperExePath =
     "_rclnim_import_interface_helper"
 
 macro importInterface*(arg: untyped): untyped =
-  let (pkgName, typeName, kind, alias) = parseImportStmt(arg)
+  let (pkgName, kind, typeNames, alias) = parseImportStmt(arg)
 
-  let
-    modulePath = pkgName/kind/typeName & ".nim"
-    libPath = currentSourcePath/../"rosinterfaces.nim"
+  let libPath = currentSourcePath/../"rosinterfaces.nim"
 
-  if (not fileExists getBindingDir()/modulePath) or (not fileExists getAltBindingDir()/modulePath) or true:
-    let res = gorgeEx(fmt"{helperExePath.quoteShell} {pkgName.quoteShell} {getBindingDir().quoteShell} {getAltBindingDir().quoteShell} {libPath.quoteShell}")
-    if res.exitCode != 0:
-      error(res.output, arg)
+  let res = gorgeEx(fmt"{helperExePath.quoteShell} {pkgName.quoteShell} {getBindingDir().quoteShell} {getAltBindingDir().quoteShell} {libPath.quoteShell}")
+  if res.exitCode != 0:
+    error(res.output, arg)
+  
+  let interfaceGenerated = res.output != ""
 
-  if fileExists getBindingDir()/modulePath:
-    let path = getBindingDir()/modulePath
-    result = getImport(path, alias)
-  elif fileExists getAltBindingDir()/modulePath:
-    let path = getAltBindingDir()/modulePath
-    result = getImport(path, alias)
-  else:
-    error("The rosidl interface for Nim has not yet been generated. IntelliSense is not available until you compile your program.", arg)
+  result = nnkStmtList.newNimNode()
 
-  copyLineInfo(result, arg)
+  for typeName in typeNames:
+    let modulePath = pkgName/kind/typeName & ".nim"
+    if fileExists getBindingDir()/modulePath:
+      let path = getBindingDir()/modulePath
+      result.add getImport(path, alias)
+    else:
+      if interfaceGenerated:
+        error(fmt"interface '{modulePath}' not found", arg)
+      elif fileExists getAltBindingDir()/modulePath:
+        let path = getAltBindingDir()/modulePath
+        result.add getImport(path, alias)
+      else:
+        error("The rosidl interface for Nim has not yet been generated. IntelliSense is not available until you compile your program.", arg)
+
+    copyLineInfo(result, arg)

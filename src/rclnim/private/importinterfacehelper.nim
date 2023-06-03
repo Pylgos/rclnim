@@ -17,3 +17,5 @@ when isMainModule:
     quit QuitFailure
 
   copyDir outDir, altDir
+
+  echo "ok"
