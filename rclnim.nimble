@@ -10,5 +10,5 @@ namedBin      = {"rclnim/private/importinterfacehelper": "_rclnim_import_interfa
 
 # Dependencies
 
-requires "nim >= 1.6"
+requires "nim >= 1.9"
 requires "https://github.com/Pylgos/nim-concurrent.git"

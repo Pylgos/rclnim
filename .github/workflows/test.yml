@@ -25,3 +25,6 @@ jobs:
     - run: nimble install -y --verbose
     - run: source /opt/ros/humble/setup.bash && ./run_test.sh
       shell: bash
+    # - run: choosenim stable
+    # - run: source /opt/ros/humble/setup.bash && ./run_test.sh
+    #   shell: bash
