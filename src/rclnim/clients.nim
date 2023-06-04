@@ -18,14 +18,7 @@ type
     client: Client[T]
     sequenceNum: int64
 
-# converter `[]`*[T](self: Client[T]): var ClientObj[T] =
-#   smartptrs.`[]`(self)
-
 disallowCopy ClientBaseObj
-exportDerefConverter ClientBase
-
-converter toBase*[T](p: Client[T]): ClientBase =
-  smartptrs.toBase(p)
 
 proc createClient*[T: SomeService](node: Node, serviceName: string, qos: QoSProfile): Client[T] =
   result = newSharedPtr(ClientObj[T])

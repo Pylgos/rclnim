@@ -1,4 +1,4 @@
-import "."/[utils, handles, init, contexts, publishers, subscriptions, services, clients, waitsets]
+import "."/[utils, handles, init, contexts, subscriptions, services, clients, waitsets]
 import std/[asyncdispatch, sets, locks, sequtils, tables, options]
 import concurrent/[smartptrs, channels, threaddestructors]
 
