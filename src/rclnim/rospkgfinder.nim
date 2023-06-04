@@ -1,4 +1,4 @@
-import std/[tables, os, sequtils, strutils, compilesettings]
+import std/[tables, os, strutils, compilesettings]
 
 type
   RosPackage* = object
