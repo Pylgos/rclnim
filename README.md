@@ -79,6 +79,8 @@ nimble install https://github.com/Pylgos/rclnim.git
   nimble build
   ```
 
+### Documentation
+* [API Reference](https://pylgos.github.io/rclnim/)
 
 ## License
 
