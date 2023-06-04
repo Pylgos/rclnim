@@ -1,11 +1,12 @@
 import std/[strutils, locks]
 import rospkgfinder
 
-static:
-  configureRosPackage("rcl")
-  configureRosPackage("rcutils")
-  configureRosPackage("rmw")
-  configureRosPackage("rosidl_runtime_c")
+when not defined(nimdoc):
+  static:
+    configureRosPackage("rcl")
+    configureRosPackage("rcutils")
+    configureRosPackage("rmw")
+    configureRosPackage("rosidl_runtime_c")
 
 const rmwHasBestAvailableQoS* = false
 
