@@ -23,3 +23,10 @@ task runBenchmarks, "run behchmarks":
     if name.startsWith("bench_") and ext == ".nim":
       exec fmt"nimble c -r {file.quoteShell}"
   echo readFile(thisDir()/"benchmarks/result.txt")
+
+task test, "test":
+  exec "ROS_LOCALHOST_ONLY=1 testament --megatest:off all"
+
+task generateBindings, "generate rcl binding with futhark":
+  cd "binding_generator"
+  exec "nimble --verbose c --compileOnly -d:futharkRebuild gen"
