@@ -23,7 +23,7 @@ jobs:
     - run: ln -s /usr/lib/llvm-14/lib/libclang.so /usr/lib/libclang.so
     - run: git config --global --add safe.directory /__w/rclnim/rclnim
     - run: nimble install -y --verbose
-    - run: source /opt/ros/humble/setup.bash && ./run_test.sh
+    - run: source /opt/ros/humble/setup.bash && nimble test
       shell: bash
     # - run: choosenim stable
     # - run: source /opt/ros/humble/setup.bash && ./run_test.sh
