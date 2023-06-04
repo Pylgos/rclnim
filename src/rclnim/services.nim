@@ -1,4 +1,4 @@
-import ./[rcl, errors, handles, waitsets, nodes, qosprofiles, typesupports, rosinterfaces]
+import "."/[rcl, errors, handles, waitsets, nodes, qosprofiles, typesupports, rosinterfaces]
 import concurrent/smartptrs
 import std/[locks, options]
 
@@ -64,4 +64,4 @@ proc takeRequest*[T: SomeService](self: Service[T], req: var T.Request): Option[
 proc send*[T: SomeService](self: ServiceSend[T], resp: T.Response) =
   var cResp: T.Response.CType
   nimMessageToC(resp, cResp)
-  wrapError rcl_send_response(self.service[].handle.getRclService(), addr self.requestId, addr cResp)
+  wrapError rcl_send_response(self.service[].handle.getRclService(), unsafeAddr self.requestId, addr cResp)

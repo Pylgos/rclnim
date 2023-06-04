@@ -1,4 +1,4 @@
-import ./[rcl, errors, utils, qosprofiles, rosinterfaces]
+import "."/[rcl, errors, utils, qosprofiles, rosinterfaces]
 import concurrent/smartptrs
 import std/locks
 

@@ -152,7 +152,7 @@ func toRmw*(p: LivelinessPolicy): rmw_qos_liveliness_policy_t =
 func fromRmw*(p: rmw_qos_liveliness_policy_t): LivelinessPolicy =
   when rmwHasBestAvailableQoS:
     case p
-    of RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT: SystemDefault
+    of RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT: LivelinessPolicy.SystemDefault
     of RMW_QOS_POLICY_LIVELINESS_AUTOMATIC: Automatic
     of RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC: ManualByTopic
     of RMW_QOS_POLICY_LIVELINESS_UNKNOWN: Unknown
@@ -160,7 +160,7 @@ func fromRmw*(p: rmw_qos_liveliness_policy_t): LivelinessPolicy =
     else: Unknown
   else:
     case p
-    of RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT: SystemDefault
+    of RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT: LivelinessPolicy.SystemDefault
     of RMW_QOS_POLICY_LIVELINESS_AUTOMATIC: Automatic
     of RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC: ManualByTopic
     of RMW_QOS_POLICY_LIVELINESS_UNKNOWN: Unknown

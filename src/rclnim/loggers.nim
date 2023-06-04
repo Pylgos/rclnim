@@ -31,7 +31,7 @@ proc initLogger*(name: string): Logger {.initProc.} =
 proc write*(self: Logger, loc: LogLocationInfo, severity: Severity, msg: string) =
   let rcutilsLoc = rcutils_log_location_t(function_name: loc.functionName.cstring, file_name: loc.filename.cstring, line_number: loc.lineNo.csize_t)
   if rcutils_logging_logger_is_enabled_for(self.name.cstring, severity.cint):
-    rcutils_log(addr rcutilsLoc, severity.cint, self.name.cstring, "%s", msg)
+    rcutils_log(unsafeAddr rcutilsLoc, severity.cint, self.name.cstring, "%s", msg)
 
 proc write*(self: Logger, loc: LogLocationInfo, severity: Severity, msg: varargs[string, `$`]) =
   write(self, loc, severity, msg.join(""))

@@ -1,4 +1,4 @@
-import ./[utils, handles, init, contexts, publishers, subscriptions, services, clients, waitsets]
+import "."/[utils, handles, init, contexts, publishers, subscriptions, services, clients, waitsets]
 import std/[asyncdispatch, sets, locks, sequtils, tables, options]
 import concurrent/[smartptrs, channels, threaddestructors]
 
@@ -37,8 +37,6 @@ type
 
   ShutdownError* = object of CatchableError
 
-var gAsyncWaitSet {.threadvar.}: AsyncWaitSet
-
 disallowCopy AsyncWaitSet
 
 proc `=destroy`(self: var AsyncWaitSet) {.wrapDestructorError.} =
@@ -51,6 +49,8 @@ proc `=destroy`(self: var AsyncWaitSet) {.wrapDestructorError.} =
   `=destroy`(self.waiters)
   `=destroy`(self.commandChannel)
   `=destroy`(self.eventChannel)
+
+var gAsyncWaitSet {.threadvar.}: AsyncWaitSet
 
 addThreadDestructor() do():
   {.cast(gcsafe).}:
@@ -73,17 +73,17 @@ proc waitLoop(self: ptr AsyncWaitSet) {.thread.} =
     let res = self.waitSet.wait(waitables.toSeq)
 
     case res.kind
-    of Ready:
+    of WaitResultKind.Ready:
       if res.readyWaitables.len > 0:
         for readyWaitable in res.readyWaitables:
           waitables.excl readyWaitable
         self.eventChannel.send(AsyncWaitSetEvent(kind: Ready, waitables: res.readyWaitables))
         self.event.trigger()
-    of Shutdown:
+    of WaitResultKind.Shutdown:
       self.eventChannel.send(AsyncWaitSetEvent(kind: Shutdown))
       self.event.trigger()
       return
-    of Timeout:
+    of WaitResultKind.Timeout:
       discard
 
 proc initThreadAsyncWaitSet(context: Context) =

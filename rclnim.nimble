@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "Pylgos"
-description   = "Nim bindings for ROS2 "
+description   = "Nim bindings for ROS2"
 license       = "MIT"
 srcDir        = "src"
 installExt    = @["nim"]
