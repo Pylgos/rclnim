@@ -15,7 +15,7 @@ requires "https://github.com/Pylgos/nim-concurrent.git"
 
 import std/[os, strformat, strutils]
 
-task runBenchmarks, "run behchmarks":
+task bench, "run behchmarks":
   cd thisDir()
   writeFile(thisDir()/"benchmarks/result.txt", "")
   for file in listFiles(thisDir()/"benchmarks"):
