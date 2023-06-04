@@ -5,6 +5,7 @@ on:
       - main
 env:
   deploy-dir: .gh-pages
+  nim-src: src/rclnim.nim
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -20,7 +21,7 @@ jobs:
           ~/.nimble/bin/choosenim devel
 
       - run: nimble install -y
-      - run: nimble doc --index:on --project --git.url:https://github.com/${{ github.repository }} --git.commit:main  --out:${{ env.deploy-dir }} ${{ env.nim-src }}
+      - run: nimble doc --index:on --project --git.url:https://github.com/${{ github.repository }} --git.commit:main --out:${{ env.deploy-dir }} ${{ env.nim-src }}
       - name: "Copy to index.html"
         run: cp ${{ env.deploy-dir }}/${{ github.event.repository.name }}.html ${{ env.deploy-dir }}/index.html
       - name: Deploy documents
