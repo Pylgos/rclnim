@@ -4,13 +4,13 @@ import std/locks
 
 
 type
-  ClientBaseObj* = object of RootObj
+  ClientBaseObj = object of RootObj
     handle: ClientHandle
     waitable: Waitable
   
   ClientBase* = SharedPtr[ClientBaseObj]
 
-  ClientObj*[T: SomeService] = object of ClientBaseObj
+  ClientObj[T: SomeService] = object of ClientBaseObj
 
   Client*[T: SomeService] = SharedPtr[ClientObj[T]]
 
@@ -18,8 +18,8 @@ type
     client: Client[T]
     sequenceNum: int64
 
-converter `[]`*[T](self: Client[T]): var ClientObj[T] =
-  smartptrs.`[]`(self)
+# converter `[]`*[T](self: Client[T]): var ClientObj[T] =
+#   smartptrs.`[]`(self)
 
 disallowCopy ClientBaseObj
 exportDerefConverter ClientBase
@@ -35,11 +35,11 @@ proc createClient*[T: SomeService](node: Node, serviceName: string, qos: QoSProf
 proc createClient*(node: Node, T: typedesc[SomeService], serviceName: string, qos: QoSProfile): Client[T] =
   createClient[T](node, serviceName, qos)
 
-proc handle*(self: var ClientBaseObj): ClientHandle =
-  self.handle
+proc handle*(self: ClientBase): ClientHandle =
+  self[].handle
 
-proc waitable*(self: var ClientBaseObj): Waitable =
-  self.waitable
+proc waitable*(self: ClientBase): Waitable =
+  self[].waitable
 
 proc waitable*[T](self: ClientRecv[T]): Waitable =
   self.client[].waitable

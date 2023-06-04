@@ -3,42 +3,42 @@ import concurrent/smartptrs
 import std/locks
 
 type
-  ContextHandleObj* = object
+  ContextHandleObj = object
     initialized: bool
     rclContext: rcl_context_t
 
-  GuardConditionHandleObj* = object
+  GuardConditionHandleObj = object
     initialized: bool
     context: ContextHandle
     rclGuardCondition: rcl_guard_condition_t
 
-  WaitSetHandleObj* = object
+  WaitSetHandleObj = object
     initialized: bool
     context: ContextHandle
     rclWaitSet: rcl_wait_set_t
 
-  NodeHandleObj* = object
+  NodeHandleObj = object
     initialized: bool
     context: ContextHandle
     rclNode: rcl_node_t
 
-  SubscriptionHandleObj* = object
+  SubscriptionHandleObj = object
     initialized: bool
     node: NodeHandle
     rclSubscription: rcl_subscription_t
 
-  PublisherHandleObj* = object
+  PublisherHandleObj = object
     initialized: bool
     node: NodeHandle
     rclPublisher: rcl_publisher_t
 
-  ServiceHandleObj* = object
+  ServiceHandleObj = object
     initialized: bool
     lock: Lock
     node: NodeHandle
     rclService: rcl_service_t
   
-  ClientHandleObj* = object
+  ClientHandleObj = object
     initialized: bool
     lock: Lock
     node: NodeHandle
@@ -68,15 +68,6 @@ disallowCopy SubscriptionHandleObj
 disallowCopy PublisherHandleObj
 disallowCopy ServiceHandleObj
 disallowCopy ClientHandleObj
-
-exportDerefConverter ContextHandle
-exportDerefConverter GuardConditionHandle
-exportDerefConverter WaitSetHandle
-exportDerefConverter NodeHandle
-exportDerefConverter SubscriptionHandle
-exportDerefConverter PublisherHandle
-exportDerefConverter ServiceHandle
-exportDerefConverter ClientHandle
 
 proc `=destroy`(self: var ContextHandleObj) {.wrapDestructorError.} =
   if self.initialized:
@@ -154,7 +145,7 @@ proc newContextHandle*(
       wrapError rcl_init_options_fini(addr initOpts)
   result.initialized = true
 
-proc getRclContext*(c: var ContextHandleObj): ptr rcl_context_t =
+proc getRclContext*(c: ContextHandle): ptr rcl_context_t =
   addr c.rclContext
 
 
@@ -167,7 +158,7 @@ proc newGuardConditionHandle*(context: ContextHandle): GuardConditionHandle =
       addr result.rclGuardCondition, context.getRclContext(), rcl_guard_condition_get_default_options())
   result.initialized = true
 
-proc getRclGuardCondition*(self: var GuardConditionHandleObj): ptr rcl_guard_condition_t =
+proc getRclGuardCondition*(self: GuardConditionHandle): ptr rcl_guard_condition_t =
   addr self.rclGuardCondition
 
 
@@ -179,7 +170,7 @@ proc newWaitSetHandle*(context: ContextHandle): WaitSetHandle =
     wrapError rcl_wait_set_init(addr result.rclWaitSet, 0, 0, 0, 0, 0, 0, context.getRclContext(), rcl_get_default_allocator())
   result.initialized = true
 
-proc getRclWaitSet*(w: var WaitSetHandleObj): ptr rcl_wait_set_t =
+proc getRclWaitSet*(w: WaitSetHandle): ptr rcl_wait_set_t =
   addr w.rclWaitSet
 
 
@@ -195,7 +186,7 @@ proc newNodeHandle*(context: ContextHandle, name, namespace: string): NodeHandle
       wrapError rcl_node_options_fini(addr opts)
   result.initialized = true
 
-proc getRclNode*(n: var NodeHandleObj): ptr rcl_node_t =
+proc getRclNode*(n: NodeHandle): ptr rcl_node_t =
   addr n.rclNode
 
 
@@ -219,7 +210,7 @@ proc newSubscriptionHandle*(
   # result.lock.initLock()
   result.initialized = true
 
-proc getRclSubscription*(s: var SubscriptionHandleObj): ptr rcl_subscription_t =
+proc getRclSubscription*(s: SubscriptionHandle): ptr rcl_subscription_t =
   addr s.rclSubscription
 
 # proc lock*(s: var SubscriptionHandleObj): var Lock =
@@ -241,7 +232,7 @@ proc newPublisherHandle*(
       addr result.rclPublisher, node.getRclNode(), cast[ptr rosidl_message_type_support_t](typeSupport), topicName, addr opts)
   result.initialized = true
 
-proc getRclPublisher*(s: var PublisherHandleObj): ptr rcl_publisher_t =
+proc getRclPublisher*(s: PublisherHandle): ptr rcl_publisher_t =
   addr s.rclPublisher
 
 
@@ -261,10 +252,10 @@ proc newServiceHandle*(
   result.lock.initLock()
   result.initialized = true
 
-proc getRclService*(s: var ServiceHandleObj): ptr rcl_service_t =
+proc getRclService*(s: ServiceHandle): ptr rcl_service_t =
   addr s.rclService
 
-proc getLock*(s: var ServiceHandleObj): var Lock =
+proc getLock*(s: ServiceHandle): var Lock =
   s.lock
 
 
@@ -284,8 +275,8 @@ proc newClientHandle*(
   result.lock.initLock()
   result.initialized = true
 
-proc getRclClient*(s: var ClientHandleObj): ptr rcl_client_t =
+proc getRclClient*(s: ClientHandle): ptr rcl_client_t =
   addr s.rclClient
 
-proc getLock*(s: var ClientHandleObj): var Lock =
+proc getLock*(s: ClientHandle): var Lock =
   s.lock

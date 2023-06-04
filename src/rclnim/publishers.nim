@@ -3,22 +3,14 @@ import concurrent/[smartptrs]
 
 
 type
-  PublisherBaseObj* = object of RootObj
+  PublisherBaseObj = object of RootObj
     handle: PublisherHandle
 
   PublisherBase* = SharedPtr[PublisherBaseObj]
 
-  PublisherObj*[T] = object of PublisherBaseObj
+  PublisherObj[T] = object of PublisherBaseObj
 
   Publisher*[T] = SharedPtr[PublisherObj[T]]
-
-converter `[]`*[T](self: Publisher[T]): var PublisherObj[T] =
-  smartptrs.`[]`(self)
-
-exportDerefConverter PublisherBase
-
-converter toPublisherBase*(p: Publisher): PublisherBase =
-  p.toBase()
 
 proc createPublisher*[T: SomeMessage](node: Node, topicName: string, qos: QoSProfile): Publisher[T] =
   result = newSharedPtr(PublisherObj[T])
@@ -27,10 +19,10 @@ proc createPublisher*[T: SomeMessage](node: Node, topicName: string, qos: QoSPro
 proc createPublisher*(node: Node, T: typedesc[SomeMessage], topicName: string, qos: QoSProfile): Publisher[T] =
   createPublisher[T](node, topicName, qos)
 
-proc handle*(self: var PublisherBaseObj | var PublisherObj): PublisherHandle =
-  self.handle
+proc handle*(self: PublisherBase | Publisher): PublisherHandle =
+  self[].handle
 
-proc publish*[T](pub: var PublisherObj[T], msg: T) =
+proc publish*[T](pub: Publisher[T], msg: T) =
   var cMsg: T.CType
   nimMessageToC(msg, cMsg)
   wrapError rcl_publish(pub.handle.getRclPublisher(), addr cMsg, nil)

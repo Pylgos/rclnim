@@ -17,7 +17,7 @@ let
 
 proc asyncMain {.async.} =
   let fut1 = sub.recv()
-  let fut2 = sub.toBase.waitable.wait()
+  let fut2 = sub.waitable.wait()
 
   pub.publish(Time.init())
 

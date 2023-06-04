@@ -3,23 +3,15 @@ import concurrent/[smartptrs]
 import std/locks
 
 type
-  SubscriptionBaseObj* = object of RootObj
+  SubscriptionBaseObj = object of RootObj
     handle: SubscriptionHandle
     waitable: Waitable
 
   SubscriptionBase* = SharedPtr[SubscriptionBaseObj]
 
-  SubscriptionObj*[T] = object of SubscriptionBaseObj
+  SubscriptionObj[T] = object of SubscriptionBaseObj
 
   Subscription*[T] = SharedPtr[SubscriptionObj[T]]
-
-converter `[]`*[T](self: Subscription[T]): var SubscriptionObj[T] =
-  smartptrs.`[]`(self)
-
-exportDerefConverter SubscriptionBase
-
-converter toBase*[T](p: Subscription[T]): SubscriptionBase =
-  smartptrs.toBase(p)
 
 proc createSubscription*[T: SomeMessage](node: Node, topicName: string, qos: QoSProfile): Subscription[T] =
   result = newSharedPtr(SubscriptionObj[T])
@@ -29,17 +21,17 @@ proc createSubscription*[T: SomeMessage](node: Node, topicName: string, qos: QoS
 proc createSubscription*(node: Node, T: typedesc[SomeMessage], topicName: string, qos: QoSProfile): Subscription[T] =
   createSubscription[T](node, topicName, qos)
 
-proc handle*(self: var SubscriptionBaseObj): SubscriptionHandle =
-  self.handle
+proc handle*(self: SubscriptionBase | Subscription): SubscriptionHandle =
+  self[].handle
 
-proc waitable*(self: var SubscriptionBaseObj): Waitable =
-  self.waitable
+proc waitable*(self: SubscriptionBase | Subscription): Waitable =
+  self[].waitable
 
-proc take*[T](self: SubscriptionObj[T], msg: var T): bool =
+proc take*[T](self: Subscription[T], msg: var T): bool =
   var cMsg: T.CType
   var ret: rcl_ret_t
   withLock getRclGlobalLock():
-    ret = rcl_take(self.handle[].getRclSubscription(), addr cMsg, nil, nil)
+    ret = rcl_take(self.handle.getRclSubscription(), addr cMsg, nil, nil)
   case ret
   of RCL_RET_OK:
     cMessageToNim(cMsg, msg)

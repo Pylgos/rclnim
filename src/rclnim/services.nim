@@ -4,28 +4,19 @@ import std/[locks, options]
 
 
 type
-  ServiceBaseObj* = object of RootObj
+  ServiceBaseObj = object of RootObj
     handle: ServiceHandle
     waitable: Waitable
   
   ServiceBase* = SharedPtr[ServiceBaseObj]
 
-  ServiceObj*[T] = object of ServiceBaseObj
+  ServiceObj[T] = object of ServiceBaseObj
 
   Service*[T] = SharedPtr[ServiceObj[T]]
 
   ServiceSend*[T] = object
     service: Service[T]
     requestId: rmw_request_id_t
-
-converter `[]`*[T](self: Service[T]): var ServiceObj[T] =
-  smartptrs.`[]`(self)
-
-exportDerefConverter ServiceBase
-
-converter toBase*[T](p: Service[T]): ServiceBase =
-  smartptrs.toBase(p)
-
 
 proc createService*[T: SomeService](node: Node, serviceName: string, qos: QoSProfile): Service[T] =
   result = newSharedPtr(ServiceObj[T])
@@ -35,11 +26,11 @@ proc createService*[T: SomeService](node: Node, serviceName: string, qos: QoSPro
 proc createService*(node: Node, T: typedesc[SomeService], serviceName: string, qos: QoSProfile): Service[T] =
   createService[T](node, serviceName, qos)
 
-proc handle*(self: var ServiceBaseObj): ServiceHandle =
-  self.handle
+proc handle*(self: ServiceBase | Service): ServiceHandle =
+  self[].handle
 
-proc waitable*(self: var ServiceBaseObj): Waitable =
-  self.waitable
+proc waitable*(self: ServiceBase | Service): Waitable =
+  self[].waitable
 
 proc takeRequest*[T: SomeService](self: Service[T], req: var T.Request): Option[ServiceSend[T]] =
   var

@@ -11,7 +11,7 @@ type
     Service
     Client
 
-  WaitableObj* = object
+  WaitableObj = object
     case kind*: WaitableKind
     of WaitableKind.GuardCondition:
       guardCondition*: GuardConditionHandle
@@ -25,7 +25,7 @@ type
 
   Waitable* = SharedPtr[WaitableObj]
 
-  WaitSetObj* = object
+  WaitSetObj = object
     handle: WaitSetHandle
     interruptCond: GuardConditionHandle
     interruptCondWaitable: Waitable
@@ -50,9 +50,6 @@ type
   AlreadyWaitingDefect* = object of Defect
 
   WaitableIdxPairSeq = seq[tuple[waitable: Waitable, idx: int]]
-
-exportDerefConverter Waitable
-exportDerefConverter WaitSet
 
 proc toWaitable*(s: GuardConditionHandle): Waitable =
   result = newSharedPtr(WaitableObj)
@@ -154,8 +151,8 @@ proc newWaitSet*(context = getGlobalContext()): WaitSet =
   result.callbackId = context.addPreShutdownCallback do() {.isolatedClosure.}:
     p[].interrupt()
 
-proc handle*(self: var WaitSetObj): WaitSetHandle =
-  self.handle
+proc handle*(self: WaitSet): WaitSetHandle =
+  self[].handle
 
 proc lockWaitables(waitables: openArray[Waitable]) =
   var

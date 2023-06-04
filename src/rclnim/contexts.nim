@@ -24,9 +24,14 @@ proc shutdown*(self: var ContextObj) =
   withLock getRclGlobalLock():
     wrapError rcl_shutdown(self.handle.getRclContext())
 
+proc shutdown*(self: Context) =
+  self[].shutdown()
+
 proc isValid*(self: var ContextObj): bool =
-  withLock getRclGlobalLock():
-    result = rcl_context_is_valid(self.handle.getRclContext())
+  rcl_context_is_valid(self.handle.getRclContext())
+
+proc isValid*(self: Context): bool =
+  self[].isValid()
 
 proc `=destroy`(self: var ContextObj) {.wrapDestructorError.} =
   if self.handle != nil:
@@ -44,16 +49,16 @@ proc newContext*(
   result.callbackLock.initLock()
   result.shuttingDown.store(false)
 
-proc handle*(self: ContextObj): ContextHandle =
-  self.handle
+proc handle*(self: Context): ContextHandle =
+  self[].handle
 
-proc addPreShutdownCallback*(self: var ContextObj, callback: sink proc(){.isolatedClosure.}): PreShutdownCallbackId =
+proc addPreShutdownCallback*(self: Context, callback: sink proc(){.isolatedClosure.}): PreShutdownCallbackId =
   withLock self.callbackLock:
     result = self.preShutdownCallbacks.add callback
 
-proc removePreShutdownCallback*(self: var ContextObj, id: PreShutdownCallbackId) =
+proc removePreShutdownCallback*(self: Context, id: PreShutdownCallbackId) =
   withLock self.callbackLock:
     self.preShutdownCallbacks.remove id
 
-proc isShuttingDown*(self: var ContextObj): bool =
+proc isShuttingDown*(self: Context): bool =
   self.shuttingDown.load(Acquire)
