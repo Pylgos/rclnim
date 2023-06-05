@@ -32,11 +32,15 @@ proc `=destroy`[T](s: var CMessageSequence[T]) =
   c_free(s.data)
   s.data = nil
 
-proc initCMessageSequence[T](size, cap: Natural): CMessageSequence[T] =
+proc initCMessageSequence[T](size, cap: Natural): CMessageSequence[T] {.nodestroy.} =
   doAssert cap >= size
   if cap != 0:
     result.data = cast[ptr UncheckedArray[T]](c_malloc(csize_t(sizeof(T) * cap)))
-    c_memset(result.data, 0, csize_t(sizeof(T) * cap))
+  for i in 0..<size:
+    # If there is no {.nodestroy.} pragma, this assignment creates `=sink`(result.data[i], default(T)),
+    # inside which `=destroy`(result.data[i]) is called.
+    # At this point, result.data[i] is not initialized, so undefined behavior occurs.
+    result.data[i] = default(T)
   result.capacity = cap.csize_t
   result.size = size.csize_t
 
