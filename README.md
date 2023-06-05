@@ -2,6 +2,8 @@
 
 ROS2 client library for Nim language.
 
+Note: (Alpha Stage Software) This software is under development and the API is subject to change.
+
 ## Example
 
 ```nim
@@ -79,8 +81,36 @@ nimble install https://github.com/Pylgos/rclnim.git
   nimble build
   ```
 
-### Documentation
+## Documentation
 * [API Reference](https://pylgos.github.io/rclnim/)
+
+## Features
+
+- [x] Topic
+  - [x] Publisher
+  - [x] Subscription
+- [x] Service
+  - [x] Service
+  - [x] Client
+- [ ] Action
+- [ ] Parameter
+- [x] Executors
+  - [x] Async executor
+  - [ ] Callback-based executor
+- [x] Signal handling
+  - [x] Linux
+  - [x] MacOS (Untested)
+  - [ ] Windows
+- [ ] Allocator support
+- [x] Typesupport
+  - [x] rosidl_typesupport_c wrapper (slow because it converts  Nim objects to C structures)
+  - [ ] Generate FastDDS typesupport for nim objects with macros
+- [ ] Component support
+- [ ] Zero-copy intra-process communications
+- [x] ROS Distributions
+  - [x] Humble
+  - [ ] Iron
+- [ ] Colcon support
 
 ## License
 
