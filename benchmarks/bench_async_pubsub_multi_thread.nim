@@ -38,4 +38,4 @@ waitFor subMain()
 
 joinThread(pubThread)
 
-showLatency("async_pubsub_multi_thread_thread", statistics)
+showLatency("async_pubsub_multi_thread", statistics)

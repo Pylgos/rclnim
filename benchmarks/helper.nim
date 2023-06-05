@@ -6,7 +6,7 @@ func addLine(a: var string, b = "") =
 
 proc showLatency*(name: string, s: RunningStat) =
   var res: string
-  res.addLine fmt"latency of async_pubsub_single_thread.nim | {s.n} samples"
+  res.addLine fmt"latency of {name} | {s.n} samples"
   res.addLine fmt"mean:   {s.mean() * 1e-3 : 9.2f} μs"
   res.addLine fmt"stddiv: {s.standardDeviation() * 1e-3 : 9.2f} μs"
   res.addLine fmt"max:    {s.max * 1e-3 : 9.2f} μs"
