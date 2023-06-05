@@ -29,4 +29,4 @@ task test, "test":
 
 task generateBindings, "generate rcl binding with futhark":
   cd "binding_generator"
-  exec "nimble --verbose c --compileOnly -d:futharkRebuild gen"
+  exec "nimble --verbose c --compileOnly -d:futharkRebuild -d:nodeclguards gen"
