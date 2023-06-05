@@ -44,6 +44,8 @@ proc getImport(path: string, alias: NimNode): NimNode =
 const helperExePath =
   if fileExists currentSourcePath()/"../../_rclnim_import_interface_helper":
     currentSourcePath()/"../../_rclnim_import_interface_helper"
+  elif fileExists currentSourcePath()/"../../../_rclnim_import_interface_helper":
+    currentSourcePath()/"../../../_rclnim_import_interface_helper"
   else:
     "_rclnim_import_interface_helper"
 

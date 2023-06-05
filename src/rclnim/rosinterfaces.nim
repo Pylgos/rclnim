@@ -20,8 +20,8 @@ type
 type
   CMessageSequence*[T] = object
     data: ptr UncheckedArray[T]
-    size: csize_t
-    capacity: csize_t
+    size: uint
+    capacity: uint
 
 proc `=copy`[T](dest: var CMessageSequence[T], src: CMessageSequence[T]) {.error.}
 
@@ -32,11 +32,25 @@ proc `=destroy`[T](s: var CMessageSequence[T]) =
   c_free(s.data)
   s.data = nil
 
-proc initCMessageSequence[T](size: Natural): CMessageSequence[T] =
-  if size != 0:
-    result.data = cast[ptr UncheckedArray[T]](c_malloc(csize_t(sizeof(T) * size)))
-    result.capacity = size.csize_t
+proc initCMessageSequence[T](size, cap: Natural): CMessageSequence[T] =
+  doAssert cap >= size
+  if cap != 0:
+    result.data = cast[ptr UncheckedArray[T]](c_malloc(csize_t(sizeof(T) * cap)))
+    c_memset(result.data, 0, csize_t(sizeof(T) * cap))
+  result.capacity = cap.csize_t
   result.size = size.csize_t
+
+proc initCMessageSequence[T](size: Natural): CMessageSequence[T] =
+  initCMessageSequence[T](size, size)
+
+proc len*[T](s: CMessageSequence[T]): int =
+  s.size.int
+
+proc high*[T](s: CMessageSequence[T]): int =
+  s.size.int - 1
+
+proc low*[T](s: CMessageSequence[T]): int =
+  0
 
 proc `[]`*[T](s: CMessageSequence[T], idx: int): var T =
   s.data[idx]
@@ -44,8 +58,11 @@ proc `[]`*[T](s: CMessageSequence[T], idx: int): var T =
 proc `[]=`*[T](s: CMessageSequence[T], idx: int, e: sink T) =
   s.data[idx] = e
 
-proc len*[T](s: CMessageSequence[T]): int =
-  s.size.int
+proc `[]`*[T](s: CMessageSequence[T], idx: BackwardsIndex): var T =
+  s.data[s.len - idx.int]
+
+proc `[]=`*[T](s: CMessageSequence[T], idx: BackwardsIndex, e: sink T) =
+  s.data[s.len - idx.int] = e
 
 macro accessField(obj: object, name: string): untyped =
   newDotExpr(obj, newIdentNode(name.strVal))
@@ -56,15 +73,14 @@ proc nimMessageToC*[T, U](src: T, dest: var U) =
   
   elif src is seq and dest is CMessageSequence:
     dest = initCMessageSequence[dest.T](src.len)
-    if src.len == 0: return
     for i, v in src:
       v.nimMessageToC(dest[i])
   
-  elif src is string and dest is CMessageSequence[cchar]:
-    dest = initCMessageSequence[cchar](src.len)
-    if src.len == 0: return
+  elif src is string and dest is CMessageSequence[char]:
+    dest = initCMessageSequence[char](src.len, src.len + 1)
     for i, v in src:
-      v.nimMessageToC(dest[i])
+      dest[i] = v
+    dest[^0] = '\0'
   
   elif src is object and dest is object:
     for name, value in src.fieldPairs:
@@ -77,20 +93,17 @@ proc cMessageToNim*[T, U](src: T, dest: var U) =
   when T is U:
     dest = src
   
-  elif T is CMessageSequence and U is seq:
-    static:
-      echo T, " ", U
+  elif src is CMessageSequence and dest is seq:
     dest = newSeq[dest.elementType](src.len)
-    if src.len == 0: return
     for i in 0..<src.len:
       cMessageToNim(src[i], dest[i])
   
-  elif T is CMessageSequence[cchar] and U is string:
+  elif src is CMessageSequence[char] and dest is string:
     dest = newString(src.len)
     for i in 0..<src.len:
       dest[i] = src[i]
 
-  elif T is object and U is object:
+  elif src is object and dest is object:
     for name, value in src.fieldPairs:
       cMessageToNim(value, dest.accessField(name))
 

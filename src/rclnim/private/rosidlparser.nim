@@ -352,7 +352,7 @@ proc parseMsgDef(lines: seq[Line], pkgName: string): RosMsgDef =
           result.dependencyTypes.incl (pkgName, f.typ.elemType.typeName)
         else:
           result.dependencyPkgs.incl f.typ.elemType.packageName
-          result.dependencyTypes.incl (f.typ.packageName, f.typ.elemType.typeName)
+          result.dependencyTypes.incl (f.typ.elemType.packageName, f.typ.elemType.typeName)
       result.fields.add f
       doc = ""
     of lkConst:

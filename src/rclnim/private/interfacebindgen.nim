@@ -139,11 +139,12 @@ proc toFieldDefaultValue(f: FieldDecl): string =
     else: fmt"default({toNimType(f.typ)})"
 
 proc genImports(idl: RosInterfaceDef, outDir, libPath: string): string =
+  let dir = outDir/idl.pkgName/($idl.kind)
   for dep in idl.dependencyTypes:
     let
-      path = outDir/dep.pkgName/"msg"/dep.typeName.camelCaseToSnakeCase
+      path = outDir/dep.pkgName/"msg"/dep.typeName.camelCaseToSnakeCase & ".nim"
       mangledName = mangledModuleName(dep.pkgName, dep.typeName)
-    result.addLine fmt"import {path.escape()} as {mangledName}"
+    result.addLine fmt"import {relativePath(path, dir).escape()} as {mangledName}"
   result.addLine fmt"import {libPath.escape} as module_rclnim_rosinterfaces"
   result.addLine "from ../detail/typesupport import nil"
 
