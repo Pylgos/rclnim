@@ -30,3 +30,7 @@ task test, "test":
 task generateBindings, "generate rcl binding with futhark":
   cd "binding_generator"
   exec "nimble --verbose c --compileOnly -d:futharkRebuild -d:nodeclguards gen"
+
+task reinstall, "reinstall rclnim":
+  exec "nimble -y uninstall rclnim"
+  exec "nimble install"
