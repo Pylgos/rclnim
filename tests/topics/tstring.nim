@@ -13,7 +13,7 @@ let sub = node.createSubscription(String, "test_topic", qos)
 
 proc pubMain() {.async.} =
   for i in 0..<100:
-    let msg = String.init(data = $i & "'th message!")
+    let msg = String(data: $i & "'th message!")
     pub.publish(msg)
     echo "published: ", msg
     await sleepAsync 1

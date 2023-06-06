@@ -11,7 +11,7 @@ let sub = node.createSubscription(Int64, "test_topic", qos)
 
 proc pubMain() {.async.} =
   for i in 0..<100:
-    let msg = Int64.init(data = i)
+    let msg = Int64(data: i)
     pub.publish(msg)
     echo "published: ", msg
     await sleepAsync 10

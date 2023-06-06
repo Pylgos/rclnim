@@ -19,7 +19,7 @@ proc asyncMain {.async.} =
   let fut1 = sub.recv()
   let fut2 = sub.waitable.wait()
 
-  pub.publish(Time.init())
+  pub.publish(Time())
 
   echo await fut1
   await fut2

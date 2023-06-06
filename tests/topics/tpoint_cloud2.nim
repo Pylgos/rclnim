@@ -15,7 +15,7 @@ let sub = node.createSubscription(PointCloud2, "test_topic", qos)
 
 proc pubMain() {.async.} =
   for i in 0..<100:
-    var msg = PointCloud2.init(fields = @[PointField.init(name = "x", offset = 0, datatype = PointField.UINT8, count = 1)])
+    var msg = PointCloud2(fields: @[PointField(name: "x", offset: 0, datatype: PointField.UINT8, count: 1)])
     pub.publish(msg)
     echo "published: ", msg
 

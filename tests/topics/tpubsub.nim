@@ -13,7 +13,7 @@ let sub = node.createSubscription(Time, "test_topic", qos)
 
 proc pubMain() {.async.} =
   for i in 0..<100:
-    let msg = Time.init(sec = i.int32, nanosec = 0'u32)
+    let msg = Time(sec: i.int32, nanosec: 0'u32)
     pub.publish(msg)
     echo "published: ", msg
 

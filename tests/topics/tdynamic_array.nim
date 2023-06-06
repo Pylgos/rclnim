@@ -13,7 +13,7 @@ let sub = node.createSubscription(Int64MultiArray, "test_topic", qos)
 
 proc pubMain() {.async.} =
   for i in 0..<100:
-    let msg = Int64MultiArray.init(data = @[i.int64, i+1, i+2, i+3])
+    let msg = Int64MultiArray(data: @[i.int64, i+1, i+2, i+3])
     pub.publish(msg)
     echo "published: ", msg
     await sleepAsync 1

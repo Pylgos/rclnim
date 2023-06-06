@@ -1,4 +1,4 @@
-import std/[sets, os, strutils, algorithm, tables, strformat, options]
+import std/[sets, os, strutils, algorithm, tables, strformat, options, sets]
 import nint128
 import ./rosidlparser
 
@@ -10,11 +10,43 @@ type
   PackageNotFoundError* = object of CatchableError
     pkgName*: string
 
+const
+  Keywords = [
+    "addr", "and", "as", "asm",
+    "bind", "block", "break",
+    "case", "cast", "concept", "const", "continue", "converter",
+    "defer", "discard", "distinct", "div", "do",
+    "elif", "else", "end", "enum", "except", "export",
+    "finally", "for", "from", "func",
+    "if", "import", "in", "include", "interface", "is", "isnot", "iterator",
+    "let",
+    "macro", "method", "mixin", "mod",
+    "nil", "not", "notin",
+    "object", "of", "or", "out",
+    "proc", "ptr",
+    "raise", "ref", "return",
+    "shl", "shr", "static",
+    "template", "try", "tuple", "type",
+    "using",
+    "var",
+    "when", "while",
+    "xor",
+    "yield",
+  ].toHashSet()
 
-# proc toSnakeCase(s: string): string =
-#   result = s.replace(re"(.)([A-Z][a-z]+)", "$1_$2")
-#   result = result.replace(re"([a-z0-9])([A-Z])", "$1_$2")
-#   result = result.toLowerAscii
+  RemapTable = {
+    "type": "kind",
+  }.toTable()
+
+proc snakeCaseToCamelCase(s: string): string =
+  var i = 0
+  while i < s.len:
+    if s[i] != '_':
+      result.add s[i]
+    else:
+      inc i
+      result.add s[i].toUpperAscii()
+    inc i
 
 proc camelCaseToSnakeCase(s: string): string =
   var tmp1 = ""
@@ -59,6 +91,13 @@ proc mangledModuleName(pkgName, typName: string): string =
 
 proc mangledTypeName(pkgName, typName: string): string =
   fmt"{mangledModuleName(pkgName, typName)}.{typName}"
+
+proc sanitizedFieldName(s: string): string =
+  result = s.snakeCaseToCamelCase()
+  if result in RemapTable:
+    result = RemapTable[result]
+  elif result in Keywords:
+    result = fmt"`{result}`"
 
 proc toNimType(t: Type): string =
   case t.kind
@@ -121,22 +160,7 @@ proc toFieldDefaultValue(f: FieldDecl): string =
   if f.default.isSome:
     f.default.get.toNimLiteral(f.typ)
   else:
-    case f.typ.kind
-    of tkObject: fmt"{toNimType(f.typ)}.init()"
-    of tkF32: "0'f32"
-    of tkF64: "0'f64"
-    of tkI8: "0'i8"
-    of tkI16: "0'i16"
-    of tkI32: "0'i32"
-    of tkI64: "0'i64"
-    of tkU8: "0'u8"
-    of tkU16: "0'u16"
-    of tkU32: "0'u32"
-    of tkU64: "0'u64"
-    of tkBool: "false"
-    of tkStr: "\"\""
-    of tkChar: "0'u8"
-    else: fmt"default({toNimType(f.typ)})"
+    fmt"default({toNimType(f.typ)})"
 
 proc genImports(idl: RosInterfaceDef, outDir, libPath: string): string =
   let dir = outDir/idl.pkgName/($idl.kind)
@@ -166,7 +190,7 @@ proc genObj(msg: RosMsgDef, moduleName, typeName: string, doExport: bool): strin
     result.addLine fmt"type {typeName} = object"
   result.addLine genDoc(msg.doc)
   for f in msg.fields:
-    result.add fmt"  {f.name}*: {f.typ.toNimType}"
+    result.add fmt"  {f.name.sanitizedFieldName}*: {f.typ.toNimType} = {f.toFieldDefaultValue}"
     if f.doc != "":
       result.addLine " ## \\"
       result.addLine genDoc(f.doc).indent(2)
@@ -181,21 +205,21 @@ proc genObj(msg: RosMsgDef, moduleName, typeName: string, doExport: bool): strin
     result.addLine fmt"template {c.name}*(_: typedesc[{qualifiedTypeName}]): {c.typ.toNimType} ="
     result.addLine fmt"  {toNimLiteral(c.value, c.typ)}"
   
-  result.addLine fmt"func init*("
-  result.addLine fmt"    _: typedesc[{qualifiedTypeName}],"
-  for f in msg.fields:
-    result.addLine fmt"    {f.name}: {f.typ.toNimType} = {f.toFieldDefaultValue},"
-  result.addLine fmt"  ): {qualifiedTypeName} ="
-  result.addLine fmt"  {qualifiedTypeName}("
-  for f in msg.fields:
-    result.addLine fmt"    {f.name}: {f.name},"
-  result.addLine "  )"
+  # result.addLine fmt"func init*("
+  # result.addLine fmt"    _: typedesc[{qualifiedTypeName}],"
+  # for f in msg.fields:
+  #   result.addLine fmt"    {f.name.sanitizedFieldName}: {f.typ.toNimType} = {f.toFieldDefaultValue},"
+  # result.addLine fmt"  ): {qualifiedTypeName} ="
+  # result.addLine fmt"  {qualifiedTypeName}("
+  # for f in msg.fields:
+  #   result.addLine fmt"    {f.name.sanitizedFieldName}: {f.name.sanitizedFieldName},"
+  # result.addLine "  )"
 
   result.addLine
 
   result.addLine fmt"type {typeName}_CType = object"
   for f in msg.fields:
-    result.addLine fmt"  {f.name}*: {f.typ.toCType}"
+    result.addLine fmt"  {f.name.sanitizedFieldName}*: {f.typ.toCType}"
 
   result.addLine
 
@@ -240,8 +264,8 @@ proc processSrv(idl: RosInterfaceDef, outDir, libPath: string) =
   let
     moduleName = idl.typeName.camelCaseToSnakeCase
     path = outDir/idl.pkgName/"srv"/moduleName & ".nim"
-    requestName = idl.typeName & "_Request"
-    responseName = idl.typeName & "_Response"
+    requestName = idl.typeName & "Request"
+    responseName = idl.typeName & "Response"
     typeName = idl.typeName
     qualifiedTypeName = fmt"{typeName.camelCaseToSnakeCase}.{typeName}"
   
@@ -301,3 +325,8 @@ proc generateInterfaceBindings*(pkgName, outDir, libPath: string) =
     let deps = pkgs[p].processPkg(outDir, libPath)
     pending.incl deps - built
     built.incl p
+
+when isMainModule:
+  doAssert snakeCaseToCamelCase("snake_case") == "snakeCase"
+  doAssert snakeCaseToCamelCase("point_cloud2") == "pointCloud2"
+  doAssert snakeCaseToCamelCase("color_rgba") == "colorRgba"
