@@ -52,10 +52,6 @@ proc `=destroy`(self: var AsyncWaitSet) {.wrapDestructorError.} =
 
 var gAsyncWaitSet {.threadvar.}: AsyncWaitSet
 
-addThreadDestructor() do():
-  {.cast(gcsafe).}:
-    `=destroy`(gAsyncWaitSet)
-
 proc waitLoop(self: ptr AsyncWaitSet) {.thread.} =
   var waitables: HashSet[Waitable]
   while true:
@@ -104,6 +100,9 @@ proc initThreadAsyncWaitSet(context: Context) =
       gAsyncWaitSet.waiters.clear()
       gAsyncWaitSet.shutdown = true
   gAsyncWaitSet.thread.createThread(waitLoop, addr gAsyncWaitSet)
+  addThreadDestructor() do():
+    {.cast(gcsafe).}:
+      `=destroy`(gAsyncWaitSet)
 
 proc prepareThreadAsyncWaitSet(context = getGlobalContext()) =
   if gAsyncWaitSet.waitSet == nil:
