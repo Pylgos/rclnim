@@ -272,8 +272,8 @@ proc processSrv(idl: RosInterfaceDef, outDir, libPath: string) =
   var s = ""
   s.addLine genImports(idl, outDir, libPath)
 
-  s.add genObj(idl.request, moduleName, requestName, false)
-  s.add genObj(idl.response, moduleName, responseName, false)
+  s.add genObj(idl.request, moduleName, requestName, true)
+  s.add genObj(idl.response, moduleName, responseName, true)
   
   s.addLine fmt"type {typeName}* = object"
   s.addLine
