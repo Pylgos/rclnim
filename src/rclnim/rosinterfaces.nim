@@ -28,7 +28,8 @@ proc `=copy`[T](dest: var CMessageSequence[T], src: CMessageSequence[T]) {.error
 proc `=destroy`[T](s: var CMessageSequence[T]) =
   if s.data == nil: return
   for i in 0..<s.size:
-    `=destroy`(s.data[i])
+    {.cast(raises: []).}:
+      `=destroy`(s.data[i])
   c_free(s.data)
   s.data = nil
 
