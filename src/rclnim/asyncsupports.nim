@@ -1,4 +1,4 @@
-import "."/[utils, handles, init, contexts, subscriptions, services, clients, waitsets]
+import "."/[utils, init, contexts, subscriptions, services, clients, waitsets, parameters]
 import std/[asyncdispatch, sets, locks, sequtils, tables, options]
 import concurrent/[smartptrs, channels, threaddestructors]
 
@@ -144,5 +144,13 @@ proc recv*[T](self: ClientRecv[T]): Future[T.Response] {.async.} =
   while true:
     if self.takeResponse(result):
       return
+    else:
+      await self.waitable.wait()
+
+proc waitForUpdate*(self: ParamServer): Future[seq[ParamEvent]] {.async.} =
+  while true:
+    let events = self.takeEvents()
+    if events.len > 0:
+      return events
     else:
       await self.waitable.wait()
