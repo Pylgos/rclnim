@@ -1,4 +1,4 @@
-import std/[sets, os, strutils, algorithm, tables, strformat, options, sets]
+import std/[os, strutils, algorithm, tables, strformat, options, sets]
 import nint128
 import ./rosidlparser
 
@@ -33,10 +33,6 @@ const
     "xor",
     "yield",
   ].toHashSet()
-
-  RemapTable = {
-    "type": "kind",
-  }.toTable()
 
 proc snakeCaseToCamelCase(s: string): string =
   var i = 0
@@ -94,9 +90,7 @@ proc mangledTypeName(pkgName, typName: string): string =
 
 proc sanitizedFieldName(s: string): string =
   result = s.snakeCaseToCamelCase()
-  if result in RemapTable:
-    result = RemapTable[result]
-  elif result in Keywords:
+  if result in Keywords:
     result = fmt"`{result}`"
 
 proc toNimType(t: Type): string =
@@ -156,11 +150,11 @@ proc toNimLiteral(v: Literal, t: Type): string =
     result.add ']'
     result
 
-proc toFieldDefaultValue(f: FieldDecl): string =
+proc toFieldDefaultValueAsgn(f: FieldDecl): string =
   if f.default.isSome:
-    f.default.get.toNimLiteral(f.typ)
+    fmt" = {f.default.get.toNimLiteral(f.typ)}"
   else:
-    fmt"default({toNimType(f.typ)})"
+    ""
 
 proc genImports(idl: RosInterfaceDef, outDir, libPath: string): string =
   let dir = outDir/idl.pkgName/($idl.kind)
@@ -190,7 +184,7 @@ proc genObj(msg: RosMsgDef, moduleName, typeName: string, doExport: bool): strin
     result.addLine fmt"type {typeName} = object"
   result.addLine genDoc(msg.doc)
   for f in msg.fields:
-    result.add fmt"  {f.name.sanitizedFieldName}*: {f.typ.toNimType} = {f.toFieldDefaultValue}"
+    result.add fmt"  {f.name.sanitizedFieldName}*: {f.typ.toNimType}{f.toFieldDefaultValueAsgn}"
     if f.doc != "":
       result.addLine " ## \\"
       result.addLine genDoc(f.doc).indent(2)
@@ -204,16 +198,6 @@ proc genObj(msg: RosMsgDef, moduleName, typeName: string, doExport: bool): strin
   for c in msg.constants:
     result.addLine fmt"template {c.name}*(_: typedesc[{qualifiedTypeName}]): {c.typ.toNimType} ="
     result.addLine fmt"  {toNimLiteral(c.value, c.typ)}"
-  
-  # result.addLine fmt"func init*("
-  # result.addLine fmt"    _: typedesc[{qualifiedTypeName}],"
-  # for f in msg.fields:
-  #   result.addLine fmt"    {f.name.sanitizedFieldName}: {f.typ.toNimType} = {f.toFieldDefaultValue},"
-  # result.addLine fmt"  ): {qualifiedTypeName} ="
-  # result.addLine fmt"  {qualifiedTypeName}("
-  # for f in msg.fields:
-  #   result.addLine fmt"    {f.name.sanitizedFieldName}: {f.name.sanitizedFieldName},"
-  # result.addLine "  )"
 
   result.addLine
 
@@ -325,8 +309,3 @@ proc generateInterfaceBindings*(pkgName, outDir, libPath: string) =
     let deps = pkgs[p].processPkg(outDir, libPath)
     pending.incl deps - built
     built.incl p
-
-when isMainModule:
-  doAssert snakeCaseToCamelCase("snake_case") == "snakeCase"
-  doAssert snakeCaseToCamelCase("point_cloud2") == "pointCloud2"
-  doAssert snakeCaseToCamelCase("color_rgba") == "colorRgba"
