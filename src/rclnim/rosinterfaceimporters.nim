@@ -1,45 +1,137 @@
-import std/[os, macros, compilesettings, strformat]
+import std/[os, macros, compilesettings, strformat, tables, sequtils]
 
-proc parseImportStmt(n: NimNode): tuple[pkgName, kind: string, typeNames: seq[string], alias: NimNode] =
-  if n.kind == nnkInfix and eqIdent(n[0], "as"):
-    result = parseImportStmt(n[1])
-    result.alias = n[2]
+type
+  Module = object
+    pkg, kind, name: string
+    alias: NimNode
+    typeAliases: Table[string, NimNode]
+
+proc expect(n: NimNode, kind: set[NiMNodeKind]): NimNode =
+  expectKind n, kind
+  n
+
+proc expect(n: NimNode, kind: NiMNodeKind): NimNode =
+  expectKind n, kind
+  n
+
+proc toKey(n: NimNode): string =
+  case n.kind
+  of nnkIdent:
+    $n
+  of nnkNilLit:
+    ":nil"
   else:
-    result.pkgName = $n[1][1]
-    result.kind = $n[1][2]
-    case n[2].kind:
-    of nnkBracket:
-      for typeNameNode in n[2]:
-        if typeNameNode.kind == nnkIdent:
-          result.typeNames.add $typeNameNode
-        else:
-          error("invalid syntax", typeNameNode)
-    of nnkIdent:
-      result.typeNames = @[$n[2]]
+    doAssert false
+    ""
+
+proc parseModulePath(n: NimNode): tuple[pkg, kind, name: NimNode] =
+  expectKind n, nnkInfix
+  let
+    pkgIdent = n[1][1].expect(nnkIdent)
+    kindIdent = n[1][2].expect(nnkIdent)
+    nameIdent = n[2].expect({nnkIdent, nnkBracket})
+  if $kindIdent notin ["msg", "srv", "action"]:
+    error("invalid interface type. expected: {msg, srv, action}", kindIdent)
+  (pkgIdent, kindIdent, nameIdent)
+
+
+proc parseImport(nodes: seq[NimNode]): seq[Module] =
+  var modules = initTable[string, Module]()
+  var typeAliases: Table[string, Table[string, NimNode]]
+  var typNodeByAliasNode: Table[string, NimNode] # just for better diagnostics
+
+  proc addModule(name: string, m: Module) =
+    if name in modules:
+      error("duplicated import", m.alias)
     else:
-      error("invalid syntax", n[2])
-    result.alias = nil
+      modules[name] = m
   
-  if result.typeNames.len != 1 and result.alias != nil:
-    error("alias names are not allowed when importing multiple interfaces at the same time", result.alias)
+  proc addTypeAlias(module, typ, alias: NimNode) =
+    let
+      moduleName = $module
+      typName = $typ
+    if moduleName != "" and moduleName notin modules:
+      error(fmt"module '{$module}' not found", module)
+    if moduleName in typeAliases:
+      if typName notin typeAliases[moduleName]:
+        typeAliases[moduleName][typName] = alias
+        typNodeByAliasNode[alias.toKey] = typ
+      else:
+        error("multiple aliases to same type are not allowed", alias)
+    else:
+      typeAliases[moduleName] = initTable[string, NimNode]()
+      typeAliases[moduleName][typName] = alias
+      typNodeByAliasNode[alias.toKey] = typ
+
+  for n in nodes:
+    echo treeRepr n
+    if n.kind == nnkInfix and eqIdent(n[0], "as"):
+      expectKind n[1], {nnkDotExpr, nnkIdent, nnkInfix}
+      if n[1].kind == nnkDotExpr:
+        # my_msg.MyMsg as MyAlias
+        let
+          moduleIdent = n[1][0].expect(nnkIdent)
+          typeIdent = n[1][1].expect(nnkIdent)
+          typeAliasIdent = n[2].expect({nnkIdent, nnkNilLit})
+        addTypeAlias moduleIdent, typeIdent, typeAliasIdent
+      elif n[1].kind == nnkIdent:
+        # MyMsg as MyAlias
+        let
+          typeIdent = n[1].expect(nnkIdent)
+          typeAliasIdent = n[2].expect({nnkIdent, nnkNilLit})
+        addTypeAlias ident(""), typeIdent, typeAliasIdent
+      elif n[1].kind == nnkInfix and eqIdent(n[1][0], "/") and
+           n[1][1].kind == nnkInfix and eqIdent(n[1][1][0], "/") and n[1][2].kind == nnkIdent:
+        # my_package/msg/my_msg as my_alias
+        let
+          (pkg, kind, name) = parseModulePath(n[1])
+          alias = n[2].expect(nnkIdent)
+        addModule $alias, Module(pkg: $pkg, kind: $kind, name: $name, alias: alias)
+      else:
+        error("invalid syntax", n)
+    elif n.kind == nnkInfix and eqIdent(n[0], "/") and
+         n[1].kind == nnkInfix and eqIdent(n[1][0], "/"):
+      expectKind n[2], {nnkIdent, nnkBracket}
+      if n[2].kind == nnkIdent:
+        # my_package/msg/my_msg
+        let (pkg, kind, name) = parseModulePath(n)
+        addModule $name, Module(pkg: $pkg, kind: $kind, name: $name, alias: name)
+      elif n[2].kind == nnkBracket:
+        # my_package/msg/[my_msg, another_msg, yet_another_msg as my_alias]
+        let (pkg, kind, names) = parseModulePath(n)
+        for name in names:
+          if name.kind == nnkIdent:
+            addModule $name, Module(pkg: $pkg, kind: $kind, name: $name, alias: name)
+          elif name.kind == nnkInfix and eqIdent(name[0], "as"):
+            let
+              origName = name[1].expect(nnkIdent)
+              alias = name[2].expect(nnkIdent)
+            addModule $alias, Module(pkg: $pkg, kind: $kind, name: $origName, alias: alias)
+    else:
+      error("invalid syntax", n)
+  if "" in typeAliases:
+    let alias = typeAliases[""]
+    if modules.len == 0:
+      for a in alias.values:
+        error("invalid syntax", typNodeByAliasNode[a.toKey])
+    elif modules.len > 1:
+      for a in alias.values:
+        error("The interface name must be specified explicitly, e.g., my_msg.MyType", typNodeByAliasNode[a.toKey])
+    let m = modules.values.toSeq[0]
+    typeAliases[$m.alias] = alias
+    typeAliases.del ""
+  for (moduleName, typeAlias) in typeAliases.pairs():
+    if moduleName notin modules:
+      for a in typeAlias.values:
+        error("invalid syntax", a)
+    modules[moduleName].typeAliases = typeAlias
+  modules.values.toSeq()
 
 proc getBindingDir(): string =
   querySetting(SingleValueSetting.nimcacheDir)/"ros2_interface_bindings"
 
 proc getAltBindingDir(): string =
   getTempDir()/"ros2_interface_bindings"
-
-proc getImport(path: string, alias: NimNode): NimNode =
-  if alias == nil:
-    nnkImportStmt.newTree(path.newLit)
-  else:
-    nnkImportStmt.newTree(
-      nnkInfix.newTree(
-        ident"as",
-        newLit path,
-        alias
-      )
-    )
 
 const helperExePath =
   if fileExists currentSourcePath()/"../../_rclnim_import_interface_helper":
@@ -49,31 +141,50 @@ const helperExePath =
   else:
     "_rclnim_import_interface_helper"
 
-macro importInterface*(arg: untyped): untyped =
-  let (pkgName, kind, typeNames, alias) = parseImportStmt(arg)
+proc writeImportStmt(path: string, module: Module, res: var NimNode) =
+  let moduleNode = nnkInfix.newTree(ident"as", newLit path, module.alias)
 
+  var impNode: NimNode
+  if module.typeAliases.len == 0:
+    impNode = nnkImportStmt.newTree(moduleNode)
+  else:
+    impNode = nnkImportExceptStmt.newTree(moduleNode)
+    for (typ, alias) in module.typeAliases.pairs:
+      impNode.add ident(typ)
+  
+  res.add impNode
+
+  if module.typeAliases.len > 0:
+    let typSection = nnkTypeSection.newNimNode()
+    for (typ, alias) in module.typeAliases.pairs:
+      typSection.add nnkTypeDef.newTree(alias, newEmptyNode(), newDotExpr(module.alias, ident typ))
+    res.add typSection
+
+macro importInterface*(first: untyped, rest: varargs[untyped]): untyped =
+  let modules = parseImport(first & rest.toSeq)
+  let pkgName = modules[0].pkg
   let libPath = currentSourcePath/../"rosinterfaces.nim"
-
+  
   let res = gorgeEx(fmt"{helperExePath.quoteShell} {pkgName.quoteShell} {getBindingDir().quoteShell} {getAltBindingDir().quoteShell} {libPath.quoteShell}")
   if res.exitCode != 0:
-    error(res.output, arg)
+    error(res.output, first)
   
-  let interfaceGenerated = res.output != ""
-
-  result = nnkStmtList.newNimNode()
-
-  for typeName in typeNames:
-    let modulePath = pkgName/kind/typeName & ".nim"
-    if fileExists getBindingDir()/modulePath:
-      let path = getBindingDir()/modulePath
-      result.add getImport(path, alias)
-    else:
-      if interfaceGenerated:
-        error(fmt"interface '{modulePath}' not found", arg)
-      elif fileExists getAltBindingDir()/modulePath:
-        let path = getAltBindingDir()/modulePath
-        result.add getImport(path, alias)
+  let isInterfaceGenerated = res.output != ""
+  
+  result = newStmtList()
+  for module in modules:
+    let
+      path = getBindingDir()/module.pkg/module.kind/module.name & ".nim"
+      altPath = getAltBindingDir()/module.pkg/module.kind/module.name & ".nim"
+    if isInterfaceGenerated:
+      if fileExists path:
+        writeImportStmt(path, module, result)
       else:
-        error("The rosidl interface for Nim has not yet been generated. IntelliSense is not available until you compile your program.", arg)
-
-    copyLineInfo(result, arg)
+        error(fmt"interface '{module.name}' not found", module.alias)
+    else:
+      if fileExists path:
+        writeImportStmt(path, module, result)
+      elif fileExists altPath:
+        writeImportStmt(altPath, module, result)
+      else:
+        error("interface has not yet been generated. code analysis is not available until you compile your program.", module.alias)
