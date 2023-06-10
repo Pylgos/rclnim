@@ -94,6 +94,8 @@ nimble install https://github.com/Pylgos/rclnim.git
   - [x] Client
 - [ ] Action
 - [ ] Parameter
+  - [x] Parameter server
+  - [ ] Parameter client
 - [x] Executors
   - [x] Async executor
   - [ ] Callback-based executor
