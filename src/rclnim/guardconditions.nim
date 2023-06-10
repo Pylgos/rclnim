@@ -1,4 +1,4 @@
-import "."/[rcl, allocators, errors, handles, contexts, init, waitsets]
+import "."/[rcl, errors, handles, contexts, init, waitsets]
 import concurrent/[smartptrs]
 
 
@@ -19,3 +19,6 @@ proc handle*(self: GuardCondition): GuardCOnditionHandle =
 
 proc waitable*(self: GuardCondition): Waitable =
   self[].waitable
+
+proc trigger*(self: GuardCondition) =
+  wrapError rcl_trigger_guard_condition(self[].handle.getRclGuardCondition())

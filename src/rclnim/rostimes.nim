@@ -1,7 +1,8 @@
 import std/[times, strformat]
-import rcl
+import rcl, rosinterfaceimporters
 import utils
 
+importInterface builtin_interfaces/msg/time as time_msg
 
 type
   RosTime* = object
@@ -49,3 +50,10 @@ func toRmw*(d: Duration): rmw_time_t =
 
 func fromRmw*(d: rmw_time_t): Duration =
   initDuration(nanoseconds = rmw_time_total_nsec(d))
+
+func toMsg*(t: RosTime): time_msg.Time =
+  let
+    sec = t.nanoseconds div 1_000_000_000
+    nanosec = t.nanoseconds - sec * 1_000_000_000
+  result.sec = sec.int32
+  result.nanosec = nanosec.uint32

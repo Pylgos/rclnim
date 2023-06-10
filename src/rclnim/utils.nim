@@ -55,3 +55,11 @@ macro getCurrentProcName*(): untyped =
   newCall(bindSym"getProcNameAux"):
     quote do:
       var dummy: int
+
+macro accessField(obj: untyped, name: static string): untyped =
+  newDotExpr(obj, ident(name))
+
+proc destroyFields*[T](val: var T) =
+  for name, field in val.fieldPairs:
+    {.cast(raises: [])}:
+      `=destroy`(val.accessField(name))
