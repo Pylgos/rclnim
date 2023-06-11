@@ -42,7 +42,7 @@ proc parseImport(nodes: seq[NimNode]): seq[Module] =
 
   proc addModule(name: string, m: Module) =
     if name in modules:
-      error("duplicated import", m.alias)
+      error("you have already imported another module with the same name", m.alias)
     else:
       modules[name] = m
   
@@ -64,7 +64,6 @@ proc parseImport(nodes: seq[NimNode]): seq[Module] =
       typNodeByAliasNode[alias.toKey] = typ
 
   for n in nodes:
-    echo treeRepr n
     if n.kind == nnkInfix and eqIdent(n[0], "as"):
       expectKind n[1], {nnkDotExpr, nnkIdent, nnkInfix}
       if n[1].kind == nnkDotExpr:
@@ -157,7 +156,9 @@ proc writeImportStmt(path: string, module: Module, res: var NimNode) =
   if module.typeAliases.len > 0:
     let typSection = nnkTypeSection.newNimNode()
     for (typ, alias) in module.typeAliases.pairs:
-      typSection.add nnkTypeDef.newTree(alias, newEmptyNode(), newDotExpr(module.alias, ident typ))
+      let qualifiedTyp = newDotExpr(module.alias, ident typ)
+      if alias.kind != nnkNilLit:
+        typSection.add nnkTypeDef.newTree(alias, newEmptyNode(), qualifiedTyp)
     res.add typSection
 
 macro importInterface*(first: untyped, rest: varargs[untyped]): untyped =
@@ -186,5 +187,7 @@ macro importInterface*(first: untyped, rest: varargs[untyped]): untyped =
         writeImportStmt(path, module, result)
       elif fileExists altPath:
         writeImportStmt(altPath, module, result)
+      elif dirExists altPath.parentDir:
+        error(fmt"interface '{module.name}' not found", module.alias)
       else:
         error("interface has not yet been generated. code analysis is not available until you compile your program.", module.alias)
