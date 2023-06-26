@@ -1,5 +1,6 @@
 discard """
   timeout: 10
+  exitcode: 1
 """
 
 import std/[asyncdispatch]

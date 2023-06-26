@@ -115,11 +115,11 @@ proc wait*(waitable: Waitable): Future[void] =
     result = newFuture[void]("asyncsupport.wait")
     result.fail(newException(ShutdownError, "context was shutdown"))
     return
-  
+
   if waitable in gAsyncWaitSet.waiters:
-    result = gAsyncWaitSet.waiters[waitable]
-    return
-  
+    raise newException(AlreadyWaitingDefect):
+      "given waitable is already waiting by current thread"
+
   result = newFuture[void]("asyncsupport.wait")
   gAsyncWaitSet.waiters[waitable] = result
   gAsyncWaitSet.commandChannel.send Command(kind: Add, waitable: waitable)
