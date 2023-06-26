@@ -1,6 +1,6 @@
-import "."/[waitsets, subscriptions, services, clients, init, utils, tables, times]
+import "."/[waitsets, subscriptions, services, clients, init, utils]
 import concurrent/[smartptrs, isolatedclosures]
-import std/[options, locks]
+import std/[options, locks, tables, times]
 
 
 type

@@ -1,6 +1,7 @@
-import "."/[rcl, handles, contexts, init, locks, errors, loggers]
+import "."/[rcl, handles, contexts, init, errors, loggers]
 import concurrent/[smartptrs]
 import system/ansi_c
+import std/locks
 
 
 type
