@@ -2,11 +2,7 @@ import std/[strutils, macros, os]
 import futhark
 import cpkgfinder
 
-
 const rclPkg = findCPackage("rcl")
-{.passL: rclPkg.linkerArgs.join(" ").}
-{.passC: rclPkg.compilerArgs.join(" ").}
-
 
 const rclIncludeDir = block:
   var res = ""
@@ -32,16 +28,6 @@ const rcutilsIncludeDir = block:
       res = arg
   doAssert res != ""
   res
-
-# proc renameCallback(name, kind, partof: string): string =
-#   result = name
-#   while result.endsWith("_"):
-#     result.removeSuffix("_")
-#   while result.startsWith("_"):
-#     result.removePrefix("_")
-#   while result.find("__") != -1:
-#     result = result.replace("__", "_")
-#   result = "!" & result
 
 macro myImportC(compilerArgs: static openArray[string], args: untyped): untyped =
   for carg in compilerArgs.join(" ").replace("-isystem ", "-I").splitWhitespace():
