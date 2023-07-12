@@ -1,4 +1,4 @@
-import "."/[rcl, handles, contexts, init, errors, loggers]
+import "."/[rcl, handles, contexts, init, errors, loggers, utils]
 import concurrent/[smartptrs]
 import system/ansi_c
 import std/locks
@@ -17,7 +17,7 @@ exportDerefConverter Node
 proc `=destroy`(self: var NodeObj) =
   `=destroy`(self.handle)
 
-proc newNode*(name: string, namespace = "", context = getGlobalContext()): Node =
+proc newNode*(name: string, namespace = "", context = getGlobalContext()): Node {.newProc.} =
   result = newSharedPtr(NodeObj)
   result[].context = context
   result[].handle = newNodeHandle(context.handle, name, namespace)

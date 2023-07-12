@@ -1,4 +1,4 @@
-import rcl, errors, handles, contexts, init
+import "."/[rcl, errors, handles, contexts, init, utils]
 import concurrent/[smartptrs, isolatedclosures]
 import threading/atomics
 import std/[options, times, locks, strformat]
@@ -140,7 +140,7 @@ proc interrupt*(self: var WaitSetObj) =
   withLock getRclGlobalLock():
     wrapError rcl_trigger_guard_condition(self.interruptCond.getRclGuardCondition())
 
-proc newWaitSet*(context = getGlobalContext()): WaitSet =
+proc newWaitSet*(context = getGlobalContext()): WaitSet {.newProc.} =
   result = newSharedPtr(WaitSetObj)
   result.handle = newWaitSetHandle(context.handle)
   result.interruptCond = newGuardConditionHandle(context.handle)
