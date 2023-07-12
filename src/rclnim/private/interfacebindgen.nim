@@ -169,7 +169,7 @@ proc genImports(idl: RosInterfaceDef, outDir, libPath: string): string =
 proc genDetail(outDir: string, pkg: Package) =
   createDir(outDir/pkg.name/"detail")
   let libPath = pkg.prefix/"lib/lib" & pkg.name & "__rosidl_typesupport_c.so"
-  let content = "{.passL:" & libPath.escape & ".}"
+  let content = "{.passL:" & libPath.escape & ".}" & "\n{.used.}"
   writeFile(outDir/pkg.name/"detail/typesupport.nim", content)
 
 proc genDoc(doc: string): string =
