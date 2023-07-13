@@ -455,12 +455,58 @@ type
     allocator*: rcl_allocator_t
 
   rcl_log_levels_t* = struct_rcl_log_levels_s ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/log_level.h:55:3
+  struct_rcl_bool_array_s* {.pure, inheritable, bycopy.} = object
+    values*: ptr bool        ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:24:16
+    size*: csize_t
+
+  rcl_bool_array_t* = struct_rcl_bool_array_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:30:3
+  struct_rcl_int64_array_s* {.pure, inheritable, bycopy.} = object
+    values*: ptr int64       ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:36:16
+    size*: csize_t
+
+  rcl_int64_array_t* = struct_rcl_int64_array_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:42:3
+  struct_rcl_double_array_s* {.pure, inheritable, bycopy.} = object
+    values*: ptr cdouble     ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:48:16
+    size*: csize_t
+
+  rcl_double_array_t* = struct_rcl_double_array_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:54:3
+  struct_rcl_byte_array_s* {.pure, inheritable, bycopy.} = object
+    values*: ptr uint8       ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:60:16
+    size*: csize_t
+
+  rcl_byte_array_t* = struct_rcl_byte_array_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:66:3
+  struct_rcl_variant_s* {.pure, inheritable, bycopy.} = object
+    bool_value*: ptr bool    ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:73:16
+    integer_value*: ptr int64
+    double_value*: ptr cdouble
+    string_value*: cstring
+    byte_array_value*: ptr rcl_byte_array_t
+    bool_array_value*: ptr rcl_bool_array_t
+    integer_array_value*: ptr rcl_int64_array_t
+    double_array_value*: ptr rcl_double_array_t
+    string_array_value*: ptr rcutils_string_array_t
+
+  rcl_variant_t* = struct_rcl_variant_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:84:3
+  struct_rcl_node_params_s* {.pure, inheritable, bycopy.} = object
+    parameter_names*: ptr ptr cschar ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:90:16
+    parameter_values*: ptr rcl_variant_t
+    num_params*: csize_t
+    capacity_params*: csize_t
+
+  rcl_node_params_t* = struct_rcl_node_params_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:96:3
+  struct_rcl_params_s* {.pure, inheritable, bycopy.} = object
+    node_names*: ptr ptr cschar ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:102:16
+    params*: ptr rcl_node_params_t
+    num_nodes*: csize_t
+    capacity_nodes*: csize_t
+    allocator*: rcutils_allocator_t
+
+  rcl_params_t* = struct_rcl_params_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:109:3
   rcl_arguments_impl_t* = struct_rcl_arguments_impl_s ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/arguments.h:32:37
   struct_rcl_arguments_s* {.pure, inheritable, bycopy.} = object
     impl*: ptr rcl_arguments_impl_t ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/arguments.h:35:16
   
   rcl_arguments_t* = struct_rcl_arguments_s ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/arguments.h:39:3
-  rcl_params_t* = struct_rcl_params_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:109:3
   rcl_init_options_impl_t* = struct_rcl_init_options_impl_s ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/init_options.h:32:40
   struct_rcl_init_options_s* {.pure, inheritable, bycopy.} = object
     impl*: ptr rcl_init_options_impl_t ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/init_options.h:35:16
@@ -648,13 +694,6 @@ type
   rmw_error_state_t* = rcutils_error_state_t ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/error_handling.h:37:31
   compiler_int_least64_t* = compiler_int64_t ## Generated based on /usr/include/bits/types.h:58:19
   compiler_gnuc_va_list* = compiler_builtin_va_list ## Generated based on /usr/lib/clang/15.0.7/include/stdarg.h:32:27
-  struct_rcl_params_s* {.pure, inheritable, bycopy.} = object
-    node_names*: ptr ptr cschar ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:102:16
-    params*: ptr rcl_node_params_t
-    num_nodes*: csize_t
-    capacity_nodes*: csize_t
-    allocator*: rcutils_allocator_t
-
   struct_rosidl_message_type_support_t* {.pure, inheritable, bycopy.} = object
     typesupport_identifier*: cstring ## Generated based on /nix/store/l5n428nlcyhhwzxy3s7albghm1xhss0j-rosidl_runtime_c-3.1.4/include/rosidl_runtime_c/rosidl_runtime_c/message_type_support_struct.h:32:8
     data*: pointer
@@ -671,7 +710,6 @@ type
     funcfield*: rosidl_runtime_c_bound_handle_function
 
   compiler_int64_t* = clong  ## Generated based on /usr/include/bits/types.h:44:25
-  rcl_node_params_t* = struct_rcl_node_params_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:96:3
   rosidl_message_typesupport_handle_function* = proc (
       a0: ptr rosidl_message_type_support_t; a1: cstring): ptr rosidl_message_type_support_t {.
       cdecl.}                ## Generated based on /nix/store/l5n428nlcyhhwzxy3s7albghm1xhss0j-rosidl_runtime_c-3.1.4/include/rosidl_runtime_c/rosidl_runtime_c/message_type_support_struct.h:28:50
@@ -681,44 +719,6 @@ type
   rosidl_runtime_c_bound_handle_function* = proc (
       a0: ptr rosidl_runtime_c_Sequence_bound; a1: cstring): ptr rosidl_runtime_c_Sequence_bound {.
       cdecl.}                ## Generated based on /nix/store/l5n428nlcyhhwzxy3s7albghm1xhss0j-rosidl_runtime_c-3.1.4/include/rosidl_runtime_c/rosidl_runtime_c/sequence_bound.h:28:54
-  struct_rcl_node_params_s* {.pure, inheritable, bycopy.} = object
-    parameter_names*: ptr ptr cschar ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:90:16
-    parameter_values*: ptr rcl_variant_t
-    num_params*: csize_t
-    capacity_params*: csize_t
-
-  rcl_variant_t* = struct_rcl_variant_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:84:3
-  struct_rcl_variant_s* {.pure, inheritable, bycopy.} = object
-    bool_value*: ptr bool    ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:73:16
-    integer_value*: ptr int64
-    double_value*: ptr cdouble
-    string_value*: cstring
-    byte_array_value*: ptr rcl_byte_array_t
-    bool_array_value*: ptr rcl_bool_array_t
-    integer_array_value*: ptr rcl_int64_array_t
-    double_array_value*: ptr rcl_double_array_t
-    string_array_value*: ptr rcutils_string_array_t
-
-  rcl_byte_array_t* = struct_rcl_byte_array_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:66:3
-  rcl_bool_array_t* = struct_rcl_bool_array_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:30:3
-  rcl_int64_array_t* = struct_rcl_int64_array_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:42:3
-  rcl_double_array_t* = struct_rcl_double_array_s ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:54:3
-  struct_rcl_byte_array_s* {.pure, inheritable, bycopy.} = object
-    values*: ptr uint8       ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:60:16
-    size*: csize_t
-
-  struct_rcl_bool_array_s* {.pure, inheritable, bycopy.} = object
-    values*: ptr bool        ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:24:16
-    size*: csize_t
-
-  struct_rcl_int64_array_s* {.pure, inheritable, bycopy.} = object
-    values*: ptr int64       ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:36:16
-    size*: csize_t
-
-  struct_rcl_double_array_s* {.pure, inheritable, bycopy.} = object
-    values*: ptr cdouble     ## Generated based on /nix/store/4yca7gxc8wbj0d7mw594azdf3i2pck19-rcl_yaml_param_parser-5.3.2/include/rcl_yaml_param_parser/rcl_yaml_param_parser/types.h:48:16
-    size*: csize_t
-
 when 0 is static:
   const
     RCUTILS_RET_OK* = 0      ## Generated based on /nix/store/7d317fh17jfd2pymkvpyxdl9x8sdlcns-rcutils-5.1.2/include/rcutils/rcutils/types/rcutils_ret.h:29:9
@@ -2357,3 +2357,26 @@ proc rcl_logging_multiple_output_handler*(location: ptr rcutils_log_location_t;
     severity: cint; name: cstring; timestamp: rcutils_time_point_value_t;
     format: cstring; args: ptr va_list): void {.cdecl,
     importc: "rcl_logging_multiple_output_handler".}
+proc rcl_yaml_node_struct_init*(allocator: rcutils_allocator_t): ptr rcl_params_t {.
+    cdecl, importc: "rcl_yaml_node_struct_init".}
+proc rcl_yaml_node_struct_init_with_capacity*(capacity: csize_t;
+    allocator: rcutils_allocator_t): ptr rcl_params_t {.cdecl,
+    importc: "rcl_yaml_node_struct_init_with_capacity".}
+proc rcl_yaml_node_struct_reallocate*(params_st: ptr rcl_params_t;
+                                      new_capacity: csize_t;
+                                      allocator: rcutils_allocator_t): rcutils_ret_t {.
+    cdecl, importc: "rcl_yaml_node_struct_reallocate".}
+proc rcl_yaml_node_struct_copy*(params_st: ptr rcl_params_t): ptr rcl_params_t {.
+    cdecl, importc: "rcl_yaml_node_struct_copy".}
+proc rcl_yaml_node_struct_fini*(params_st: ptr rcl_params_t): void {.cdecl,
+    importc: "rcl_yaml_node_struct_fini".}
+proc rcl_parse_yaml_file*(file_path: cstring; params_st: ptr rcl_params_t): bool {.
+    cdecl, importc: "rcl_parse_yaml_file".}
+proc rcl_parse_yaml_value*(node_name: cstring; param_name: cstring;
+                           yaml_value: cstring; params_st: ptr rcl_params_t): bool {.
+    cdecl, importc: "rcl_parse_yaml_value".}
+proc rcl_yaml_node_struct_get*(node_name: cstring; param_name: cstring;
+                               params_st: ptr rcl_params_t): ptr rcl_variant_t {.
+    cdecl, importc: "rcl_yaml_node_struct_get".}
+proc rcl_yaml_node_struct_print*(params_st: ptr rcl_params_t): void {.cdecl,
+    importc: "rcl_yaml_node_struct_print".}

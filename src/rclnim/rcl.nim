@@ -4,6 +4,7 @@ import rospkgfinder
 when not defined(nimdoc):
   static:
     configureRosPackage("rcl")
+    configureRosPackage("rcl_yaml_param_parser")
     configureRosPackage("rcutils")
     configureRosPackage("rmw")
     configureRosPackage("rosidl_runtime_c")

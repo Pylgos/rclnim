@@ -31,15 +31,15 @@ type
     of Str:
       strVal*: string
     of ByteArray:
-      byteSeqVal*: seq[byte]
+      byteArrayVal*: seq[byte]
     of BoolArray:
-      boolSeqVal*: seq[bool]
+      boolArrayVal*: seq[bool]
     of IntArray:
-      intSeqVal*: seq[int64]
+      intArrayVal*: seq[int64]
     of DoubleArray:
-      doubleSeqVal*: seq[float64]
+      doubleArrayVal*: seq[float64]
     of StringArray:
-      strSeqVal*: seq[string]
+      strArrayVal*: seq[string]
   
   RangeConstraintKind* = enum
     NoConstraint
@@ -94,29 +94,29 @@ func toMsg*(p: sink ParamValue): ParameterValue =
     result.stringValue = p.strVal
   of ByteArray:
     result.type = ParameterType.PARAMETER_BYTE_ARRAY
-    result.byteArrayValue = p.byteSeqVal
+    result.byteArrayValue = p.byteArrayVal
   of BoolArray:
     result.type = ParameterType.PARAMETER_BOOL_ARRAY
-    result.boolArrayValue = p.boolSeqVal
+    result.boolArrayValue = p.boolArrayVal
   of IntArray:
     result.type = ParameterType.PARAMETER_INTEGER_ARRAY
-    result.integerArrayValue = p.intSeqVal
+    result.integerArrayValue = p.intArrayVal
   of DoubleArray:
     result.type = ParameterType.PARAMETER_DOUBLE_ARRAY
-    result.doubleArrayValue = p.doubleSeqVal
+    result.doubleArrayValue = p.doubleArrayVal
   of StringArray:
     result.type = ParameterType.PARAMETER_STRING_ARRAY
-    result.stringArrayValue = p.strSeqVal
+    result.stringArrayValue = p.strArrayVal
 
 func toParam*(v: bool): ParamValue = ParamValue(kind: Bool, boolVal: v)
 func toParam*(v: int64): ParamValue = ParamValue(kind: Int, intVal: v)
 func toParam*(v: float64): ParamValue = ParamValue(kind: Double, doubleVal: v)
 func toParam*(v: sink string): ParamValue = ParamValue(kind: Str, strVal: v)
-func toParam*(v: sink seq[byte]): ParamValue = ParamValue(kind: ByteArray, byteSeqVal: v)
-func toParam*(v: sink seq[bool]): ParamValue = ParamValue(kind: BoolArray, boolSeqVal: v)
-func toParam*(v: sink seq[int64]): ParamValue = ParamValue(kind: IntArray, intSeqVal: v)
-func toParam*(v: sink seq[float64]): ParamValue = ParamValue(kind: DoubleArray, doubleSeqVal: v)
-func toParam*(v: sink seq[string]): ParamValue = ParamValue(kind: StringArray, strSeqVal: v)
+func toParam*(v: sink seq[byte]): ParamValue = ParamValue(kind: ByteArray, byteArrayVal: v)
+func toParam*(v: sink seq[bool]): ParamValue = ParamValue(kind: BoolArray, boolArrayVal: v)
+func toParam*(v: sink seq[int64]): ParamValue = ParamValue(kind: IntArray, intArrayVal: v)
+func toParam*(v: sink seq[float64]): ParamValue = ParamValue(kind: DoubleArray, doubleArrayVal: v)
+func toParam*(v: sink seq[string]): ParamValue = ParamValue(kind: StringArray, strArrayVal: v)
 
 func toParam*(msg: ParameterValue): ParamValue =
   case msg.type

@@ -13,6 +13,15 @@ const rclIncludeDir = block:
   doAssert res != ""
   res
 
+const rclYamlParamParserIncludeDir = block:
+  var res = ""
+  for arg in rclPkg.compilerArgs:
+    if arg.startsWith("-I") and arg.endsWith("include/rcl_yaml_param_parser"):
+      res = arg
+      res.removePrefix("-I")
+  doAssert res != ""
+  res
+
 const rmwIncludeDir = block:
   var res = ""
   for arg in rclPkg.compilerArgs:
@@ -41,6 +50,7 @@ macro myImportC(compilerArgs: static openArray[string], args: untyped): untyped 
 myImportC(rclPkg.compilerArgs):
   outputPath getProjectPath()/../"src/rclnim/distro/humble.nim"
   path rclIncludeDir
+  path rclYamlParamParserIncludeDir
   path rmwIncludeDir
   path rcutilsIncludeDir
   keepCase()
@@ -50,4 +60,5 @@ myImportC(rclPkg.compilerArgs):
   "rcl/subscription.h"
   "rcl/wait.h"
   "rcl/logging.h"
+  "rcl_yaml_param_parser/parser.h"
   "rmw/error_handling.h"

@@ -1,6 +1,10 @@
-import "."/[nodes, rosinterfaceimporters, contexts, services, publishers, singlethreadexecutors, qosprofiles, guardconditions, waitsets, parametertypes, utils]
+import "."/[
+  nodes, rosinterfaceimporters, contexts, services, publishers, 
+  singlethreadexecutors, qosprofiles, guardconditions, waitsets,
+  parametertypes, utils, handles, rcl, errors]
 import concurrent/[smartptrs, isolatedclosures]
 import std/[strformat, tables, locks, strutils]
+import tinyre
 
 export parametertypes
 
@@ -46,6 +50,8 @@ type
 
   ParamServer* = SharedPtr[ParamServerObj]
 
+  UndeclaredParamError* = object of ValueError
+
 const
   getParamsName = "get_parameters"
   getParamTypesName = "get_parameter_types"
@@ -70,15 +76,15 @@ proc publishParamEvent(self: var ParamServerObj, ev: ParamEvent) =
 proc setParam(self: var ParamServerObj, name: string, value: sink ParamValue, checkOnly = false, notifySelf = false) =
   if not self.paramsDeclared:
     raise newException(ValueError):
-      "cannot set parameter before finishDeclaration is called"
+      "cannot set parameter before endDeclaration is called"
   if name in self.params:
     let info = self.params[name]
     if info.desc.readOnly:
       raise newException(ValueError):
-        "parameter is read only"
+        fmt"parameter '{name}' is read only"
     if (not info.desc.dynamicTyping) and value.kind != info.desc.kind:
       raise newException(ValueError):
-        fmt"parameter type mismatch. expected '{info.desc.kind}' given '{value.kind}'"
+        fmt"parameter '{name}' type mismatch. expected '{info.desc.kind}' given '{value.kind}'"
     if not checkOnly:
       self.params[name].value = value
       let ev = ParamEvent(kind: Changed, name: name, param: value)
@@ -87,17 +93,17 @@ proc setParam(self: var ParamServerObj, name: string, value: sink ParamValue, ch
         self.events.add ev
         self.updatedCond.trigger()
   else:
-    raise newException(ValueError):
-      "attempted to set undeclared parameter"
+    raise newException(UndeclaredParamError):
+      fmt"attempted to set undeclared parameter '{name}'"
 
 proc getParam(self: var ParamServerObj, name: string): ParamValue =
   if not self.paramsDeclared:
     raise newException(ValueError):
-      "cannot set parameter before finishDeclaration is called"
+      "cannot get parameter before endDeclaration is called"
   try:
     result = self.params[name].value
   except KeyError:
-    raise newException(ValueError):
+    raise newException(UndeclaredParamError):
       "attempted to get undeclared parameter"
 
 proc task(self: ptr ParamServerObj) =
@@ -196,7 +202,8 @@ proc task(self: ptr ParamServerObj) =
 proc `=destroy`(self: var ParamServerObj) {.wrapDestructorError.} =
   if self.executor != nil:
     self.executor.interrupt()
-    self.thread.joinThread()
+    if self.thread.running:
+      self.thread.joinThread()
     self.paramsLock.deinitLock()
   destroyFields(self)
 
@@ -214,7 +221,84 @@ proc createParamServer*(node: Node, qos = ParametersQoS, eventQoS = ParameterEve
 
 using self: ParamServer
 
-proc finishDeclaration*(self) =
+template ptrToUncheckedArray[T](p: ptr T): ptr UncheckedArray[T] =
+  cast[ptr UncheckedArray[T]](p)
+
+template ptrToUncheckedArray(p: ptr ptr cschar): ptr UncheckedArray[cstring] =
+  cast[ptr UncheckedArray[cstring]](p)
+
+proc paramValueFrom(v: ptr rcl_variant_t): ParamValue =
+  template toArray(field: untyped, T: typedesc): seq[T] =
+    let arr = v.field
+    var res = newSeq[T](arr.size)
+    for i in 0..<arr.size:
+      when T is string:
+        var ss = arr.ptrToUncheckedArray()[i]
+        res[i] = newString(ss.size)
+        for j in 0..<ss.size:
+          res[i][j] = ss.data[].ptrToUncheckedArray[j].char
+      else:
+        res[i] = T(arr.values.ptrToUncheckedArray[i])
+    res
+
+  if v.bool_value != nil:
+    return ParamValue(kind: Bool, boolVal: v.bool_value[])
+  elif v.integer_value != nil:
+    return ParamValue(kind: Int, intVal: v.integer_value[])
+  elif v.double_value != nil:
+    return ParamValue(kind: Double, doubleVal: v.double_value[])
+  elif v.string_value != nil:
+    return ParamValue(kind: Str, strVal: $v.string_value)
+  elif v.byte_array_value != nil:
+    return ParamValue(kind: ByteArray, byteArrayVal: toArray(byte_array_value, uint8))
+  elif v.bool_array_value != nil:
+    return ParamValue(kind: BoolArray, boolArrayVal: toArray(bool_array_value, bool))
+  elif v.integer_array_value != nil:
+    return ParamValue(kind: IntArray, intArrayVal: toArray(integer_array_value, int64))
+  elif v.double_array_value != nil:
+    return ParamValue(kind: DoubleArray, doubleArrayVal: toArray(double_array_value, float64))
+  elif v.string_array_value != nil:
+    return ParamValue(kind: StringArray, strArrayVal: toArray(string_array_value, string))
+  else:
+    doAssert false
+
+func matchNodeName*(pattern, fqn: string): bool =
+  # https://github.com/ros2/rclcpp/blob/6e97990a32afa17ab98ef4c800783c5cce801786/rclcpp/src/rclcpp/parameter_map.cpp#L28
+  let pattern = pattern.replace("/*", "(/\\w+)")
+  match(fqn, pattern.re).len != 0
+
+proc getParamsFromArgs(args: ptr rcl_arguments_t, fullyQualifiedNodeName: string): Table[string, ParamValue] =
+  var params: ptr rcl_params_t = nil
+  wrapError rcl_arguments_get_param_overrides(args, addr params)
+  if params == nil: return
+
+  defer: rcl_yaml_node_struct_fini(params)
+  doAssert params.node_names != nil
+  doAssert params.params != nil
+  let rawNodeNames = params.node_names.ptrToUncheckedArray
+  for i in 0..<params.num_nodes:
+    doAssert rawNodeNames[i] != nil
+    let nodeName = block:
+      let tmp = $rawNodeNames[i]
+      if tmp.startsWith("/"):
+        tmp
+      else:
+        "/" & tmp
+    if matchNodeName(nodeName, fullyQualifiedNodeName):
+      let paramsNode = addr params.params.ptrToUncheckedArray[i]
+      for j in 0..<paramsNode.num_params:
+        let paramName = paramsNode.parameter_names.ptrToUncheckedArray[j]
+        doAssert paramName != nil
+        let val = addr paramsNode.parameter_values.ptrToUncheckedArray[j]
+        doAssert val != nil
+        result[$paramName] = paramValueFrom(val)
+
+proc setParamFromArgs(self) =
+  let params = getParamsFromArgs(addr self.context.handle.getRclContext().global_arguments, self.fullyQualifiedNodeName)
+  for (name, value) in params.pairs:
+    self.setParam(name, value)
+
+proc endDeclaration*(self) =
   let
     node = self[].node
     base = node.name & '/'
@@ -228,6 +312,7 @@ proc finishDeclaration*(self) =
   self[].listSrv = node.createService(ListParameters, base & listParamsName, qos)
   self[].eventsPub = node.createPublisher(ParameterEvent, base & paramEventsName, eventQoS)
   self[].paramsDeclared = true
+  self.setParamFromArgs()
   createThread(self[].thread, task, self.get())
 
 proc waitable*(self): Waitable =
@@ -248,7 +333,7 @@ proc declare*(self; desc: ParamDescriptor, defaultVal: ParamValue) =
       raise newException(ValueError, "parameter already declared")
     self[].params[desc.name] = ParamInfo(value: defaultVal, desc: desc)
 
-proc declare*[T](self; name: string, defaultVal: T, description = "", readOnly = false, constraint = T.toRangeConstraint()) =
+proc declare*[T](self; name: string, defaultVal: sink T, description = "", readOnly = false, constraint = T.toRangeConstraint()) =
   let
     val = defaultVal.toParam()
     desc = ParamDescriptor(name: name, kind: val.kind, description: description, readOnly: readOnly, rangeConstraint: constraint)

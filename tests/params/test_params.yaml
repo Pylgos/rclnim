@@ -1,0 +1,29 @@
+dummy_node:
+    ros__parameters:
+        some_int: 99
+        yay: "hello!"
+
+param_test_node_a:
+    ros__parameters:
+        some_int: 42
+        a_string: "Hello world"
+        some_lists:
+            some_integers: [1, 2, 3, 4]
+            some_doubles : [3.14, 2.718]
+
+/some_namespace/param_test_node_b:
+    ros__parameters:
+        some_int: 43
+
+
+param_test_node_c:
+    ros__parameters:
+        some_int: 44
+
+/another_namespace/*:
+    ros__parameters:
+        some_int: 45
+
+/yet_another_namespace/**/param_test_node_e:
+    ros__parameters:
+        some_int: 46
