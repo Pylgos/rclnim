@@ -11,7 +11,8 @@ import rclnim/[
   rosinterfaceimporters,
   rostimes,
   services,
-  subscriptions
+  subscriptions,
+  parameters
 ]
 
 export
@@ -27,4 +28,5 @@ export
   rosinterfaceimporters,
   rostimes,
   services,
-  subscriptions
+  subscriptions,
+  parameters
