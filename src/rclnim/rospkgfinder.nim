@@ -1,4 +1,4 @@
-import std/[tables, os, strutils, compilesettings]
+import std/[tables, os, strutils, strformat, macros, compilesettings]
 
 type
   RosPackage* = object
@@ -20,8 +20,25 @@ proc findAllRosPackages(): RosPackageTable =
 
 const rosPackages = findAllRosPackages()
 
-proc findRosPackage*(name: string): RosPackage =
-  rosPackages[name]
+proc findRosPackage*(name: static string): RosPackage =
+  if name in rosPackages:
+    result = rosPackages[name]
+  else:
+    let prefixPath = getEnv("AMENT_PREFIX_PATH")
+    let msg =
+      if not existsEnv("AMENT_PREFIX_PATH"):
+        fmt"""
+        ros2 package '{name}' not found.
+        It appears that the ros2 environment has not been set up.
+        Please set up the ros2 environment before compiling.
+        see: https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Configuring-ROS2-Environment.html#source-the-setup-files
+        """.dedent
+      else:
+        fmt"""
+        ros2 package '{name}' not found.
+        AMENT_PREFIX_PATH: {prefixPath}
+        """.dedent
+    error(msg)
 
 proc includeDir*(p: RosPackage): string =
   p.prefix/"include"/p.name
@@ -44,5 +61,5 @@ proc configure*(p: static RosPackage, libName: static string = "") {.compileTime
     {.passL: linkFlag.}
 
 proc configureRosPackage*(name: static string) {.compileTime.} =
-  findRosPackage(name).configure()
-
+  const pkg = findRosPackage(name)
+  pkg.configure()
