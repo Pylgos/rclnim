@@ -1,6 +1,5 @@
-import rclnim/[
+import ./rclnim/[
   allocators,
-  asyncsupports,
   clients,
   contexts,
   init,
@@ -17,7 +16,6 @@ import rclnim/[
 
 export
   allocators,
-  asyncsupports,
   clients,
   contexts,
   init,
@@ -30,3 +28,9 @@ export
   services,
   subscriptions,
   parameters
+
+
+when defined(doc):
+  import ./rclnim/[
+    asyncdispatchsupports
+  ]

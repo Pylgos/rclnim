@@ -3,6 +3,7 @@ discard """
 """
 
 import rclnim
+import rclnim/asyncdispatchsupports
 import std/[asyncdispatch, random]
 
 randomize()

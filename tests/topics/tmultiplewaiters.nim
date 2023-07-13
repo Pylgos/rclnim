@@ -5,6 +5,7 @@ discard """
 
 import std/[asyncdispatch]
 import rclnim
+import rclnim/asyncdispatchsupports
 importInterface builtin_interfaces/msg/time
 
 rclnim.init()

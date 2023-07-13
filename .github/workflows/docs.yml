@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   # Build job
-  build:
+  build-doc:
     runs-on: ubuntu-latest
 
     container:

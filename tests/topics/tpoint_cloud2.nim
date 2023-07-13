@@ -1,4 +1,5 @@
 import rclnim
+import rclnim/asyncdispatchsupports
 import std/asyncdispatch
 importInterface sensor_msgs/msg/[point_cloud2, point_field]
 importInterface std_msgs/msg/header

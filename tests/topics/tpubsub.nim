@@ -1,4 +1,5 @@
 import rclnim
+import rclnim/asyncdispatchsupports
 import std/asyncdispatch
 importInterface builtin_interfaces/msg/time
 

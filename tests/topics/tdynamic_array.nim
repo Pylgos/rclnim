@@ -1,4 +1,5 @@
 import rclnim
+import rclnim/asyncdispatchsupports
 import std/asyncdispatch
 importInterface std_msgs/msg/int64_multi_array
 
