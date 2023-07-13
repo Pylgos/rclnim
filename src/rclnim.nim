@@ -30,7 +30,7 @@ export
   parameters
 
 
-when defined(doc):
+when defined(nimdoc):
   import ./rclnim/[
     asyncdispatchsupports
   ]
