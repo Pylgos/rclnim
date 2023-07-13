@@ -127,10 +127,10 @@ proc parseImport(nodes: seq[NimNode]): seq[Module] =
   modules.values.toSeq()
 
 proc getBindingDir(): string =
-  querySetting(SingleValueSetting.nimcacheDir)/"ros2_interface_bindings"
+  querySetting(SingleValueSetting.nimcacheDir)/"rclnim_interface_bindings"
 
 proc getAltBindingDir(): string =
-  getTempDir()/"ros2_interface_bindings"
+  getTempDir()/"rclnim_interface_bindings"
 
 const helperExePath =
   if fileExists currentSourcePath()/"../../_rclnim_import_interface_helper":
