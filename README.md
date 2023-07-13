@@ -1,13 +1,13 @@
 # rclnim
 
 ROS2 client library for Nim language.
-
-Note: (Alpha Stage Software) This software is under development and the API is subject to change.
+> **Note** (Alpha Stage Software) This software is under development and the API is subject to change.
 
 ## Example
 
 ```nim
 import rclnim
+import rclnim/asyncdispatchsupports
 import std/asyncdispatch
 importInterface std_msgs/msg/int64
 
@@ -40,79 +40,41 @@ except ShutdownError:
 
 ```
 
-## Getting Started
+## Dependencies
 
-### Dependencies
-
-* Nim >=1.9.3
+* Nim >=1.9.5
 * ROS2 Humble
 * Linux (Tested on Ubuntu 22.04)
-
-### Installing
-
-The installation procedure is the same as for the regular Nimble package.
-
-```bash
-nimble install https://github.com/Pylgos/rclnim.git
-```
-
-### Build
-
-1. Create your nimble package.
-  ```bash
-  nimble init [your-package-name]
-  ```
-  Select `binary` as the package type.
-
-2. Add rclnim to the package requirement.
-  ```bash
-  echo 'requires "https://github.com/Pylgos/rclnim.git"' >> [your-package-name].nimble
-  ```
-
-3. Setup your ROS2 environment.
-  ```bash
-  source /opt/ros/humble/setup.bash
-  ```
-
-4. Edit the source code as you like.
-
-5. Build.
-  ```bash
-  nimble build
-  ```
-
 ## Documentation
 * [API Reference](https://pylgos.github.io/rclnim/)
 
 ## Features
 
-- [x] Topic
-  - [x] Publisher
-  - [x] Subscription
-- [x] Service
-  - [x] Service
-  - [x] Client
-- [ ] Action
-- [ ] Parameter
-  - [x] Parameter server
-  - [ ] Parameter client
-- [x] Executors
-  - [x] Async executor
-  - [ ] Callback-based executor
-- [x] Signal handling
-  - [x] Linux
-  - [x] MacOS (Untested)
-  - [ ] Windows
-- [ ] Allocator support
-- [x] Typesupport
-  - [x] rosidl_typesupport_c wrapper (slow because it converts  Nim objects to C structures)
-  - [ ] Generate FastDDS typesupport for nim objects with macros
-- [ ] Component support
-- [ ] Zero-copy intra-process communications
-- [x] ROS Distributions
-  - [x] Humble
-  - [ ] Iron
-- [ ] Colcon support
+- Topic
+  - Publisher
+  - Subscription
+- Service
+  - Service
+  - Client
+- Executors
+  - Async executor
+- Signal handling
+  - Linux
+- Typesupport
+  - rosidl_typesupport_c wrapper (slow because it converts  Nim objects to C structures)
+- ROS Distributions
+  - Humble
+
+## TODO
+- Action
+- Parameter client
+- Callback-based executor
+- Generate FastDDS typesupport for nim objects with macros
+- Component support
+- Allocator support
+- Zero-copy intra-process communications
+- Iron
+- Colcon support
 
 ## License
 
