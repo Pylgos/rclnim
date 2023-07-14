@@ -61,7 +61,7 @@ proc installSignalHandler*() =
   gSignalHandler.threadStopEvent = newSelectEvent()
   gSignalHandler.signalHandlerThread.createThread(signalHandlingThreadProc, addr gSignalHandler)
 
-proc init*(args = @[paramStr(0)] & commandLineParams()) =
+proc init*(args: openArray[string] = @[paramStr(0)] & commandLineParams()) =
   gContext = newContext(args)
   installSignalHandler()
   var rclAlloc = rcl_get_default_allocator()

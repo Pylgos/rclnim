@@ -41,7 +41,7 @@ proc `=destroy`(self: var ContextObj) {.wrapDestructorError.} =
   `=destroy`(self.handle)
   `=destroy`(self.preShutdownCallbacks)
 
-proc newContext*(args = @[paramStr(0)] & commandLineParams()): Context {.newProc.} =
+proc newContext*(args: openArray[string] = @[paramStr(0)] & commandLineParams()): Context {.newProc.} =
   result = newSharedPtr(ContextObj)
   result.handle = newContextHandle(args, rcl_get_default_allocator())
   result.callbackLock.initLock()

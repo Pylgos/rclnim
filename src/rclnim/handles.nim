@@ -130,7 +130,7 @@ proc `=destroy`(self: var ClientHandleObj) {.wrapDestructorError.} =
   `=destroy`(self.node)
 
 proc newContextHandle*(
-    args: seq[string],
+    args: openArray[string],
     allocator = rcl_get_default_allocator()): ContextHandle =
   result = newSharedPtr(ContextHandleObj)
   result.rclContext = rcl_get_zero_initialized_context()
