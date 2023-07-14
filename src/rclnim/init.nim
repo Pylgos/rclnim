@@ -1,4 +1,4 @@
-import rcl, allocators, contexts, utils, errors, handles
+import rcl, contexts, utils, errors, handles
 import std/[os, posix, strformat, selectors, locks]
 import concurrent/smartptrs
 
@@ -61,12 +61,10 @@ proc installSignalHandler*() =
   gSignalHandler.threadStopEvent = newSelectEvent()
   gSignalHandler.signalHandlerThread.createThread(signalHandlingThreadProc, addr gSignalHandler)
 
-proc init*(
-    args =  @[paramStr(0)] & commandLineParams(),
-    allocator = getDefaultAllocator()) =
-  gContext = newContext(args, allocator)
+proc init*(args = @[paramStr(0)] & commandLineParams()) =
+  gContext = newContext(args)
   installSignalHandler()
-  var rclAlloc = allocator.getRclAllocator()
+  var rclAlloc = rcl_get_default_allocator()
   withLock getRclGlobalLock():
     wrapError rcl_logging_configure(addr gContext.handle.getRclContext().global_arguments, addr rclAlloc)
   gInitialized = true

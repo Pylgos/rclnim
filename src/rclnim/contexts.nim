@@ -1,4 +1,4 @@
-import "."/[rcl, allocators, errors, handles, callbackstorages, utils]
+import "."/[rcl, errors, handles, callbackstorages, utils]
 import concurrent/[smartptrs, isolatedclosures]
 import std/[os, locks]
 import threading/atomics
@@ -41,11 +41,9 @@ proc `=destroy`(self: var ContextObj) {.wrapDestructorError.} =
   `=destroy`(self.handle)
   `=destroy`(self.preShutdownCallbacks)
 
-proc newContext*(
-    args =  @[paramStr(0)] & commandLineParams(),
-    allocator = getDefaultAllocator()): Context {.newProc.} =
+proc newContext*(args = @[paramStr(0)] & commandLineParams()): Context {.newProc.} =
   result = newSharedPtr(ContextObj)
-  result.handle = newContextHandle(args, allocator.getRclAllocator())
+  result.handle = newContextHandle(args, rcl_get_default_allocator())
   result.callbackLock.initLock()
   result.shuttingDown.store(false)
 

@@ -1,5 +1,4 @@
 import ./rclnim/[
-  allocators,
   clients,
   contexts,
   init,
@@ -15,7 +14,6 @@ import ./rclnim/[
 ]
 
 export
-  allocators,
   clients,
   contexts,
   init,
