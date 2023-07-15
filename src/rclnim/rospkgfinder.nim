@@ -85,13 +85,15 @@ proc newPragma(pragma, arg: string): NimNode =
 
 macro configure*(p: static RosPackage, libName: static string = ""): untyped =
   result = newStmtList()
-  let cFlag = "-I" & p.includeDir
-  if not SingleValueSetting.compileOptions.querySetting.contains(cFlag):
-    result.add newPragma("passC", cFlag)
+  if dirExists(p.includeDir):
+    let cFlag = "-I" & p.includeDir
+    if not SingleValueSetting.compileOptions.querySetting.contains(cFlag):
+      result.add newPragma("passC", cFlag)
 
-  let libDirFlag = "-L" & p.libDir
-  if not SingleValueSetting.linkOptions.querySetting.contains(libDirFlag):
-    result.add newPragma("passL", libDirFlag)
+  if dirExists(p.libDir):
+    let libDirFlag = "-L" & p.libDir
+    if not SingleValueSetting.linkOptions.querySetting.contains(libDirFlag):
+      result.add newPragma("passL", libDirFlag)
   
   let libName = if libName == "": p.name else: libName
   if fileExists(p.libDir/"lib" & libName & ".so"):
