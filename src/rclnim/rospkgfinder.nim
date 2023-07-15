@@ -1,4 +1,6 @@
-import std/[tables, os, strutils, strformat, macros, compilesettings]
+import std/[
+  tables, os, strutils, strformat, macros, compilesettings,
+  sets, options, genasts, sequtils]
 
 type
   RosPackage* = object
@@ -8,7 +10,7 @@ type
   RosPackageTable* = Table[string, RosPackage]
 
 
-proc findAllRosPackages(): RosPackageTable =
+proc collectAllRosPackages(): RosPackageTable =
   let prefixes = getEnv("AMENT_PREFIX_PATH").split(':')
   for prefix in prefixes:
     let resourceDir = prefix/"share/ament_index/resource_index/packages"
@@ -17,10 +19,9 @@ proc findAllRosPackages(): RosPackageTable =
         let packageName = pc.path.splitFile().name
         result[packageName] = RosPackage(name: packageName, prefix: prefix)
 
+const rosPackages = collectAllRosPackages()
 
-const rosPackages = findAllRosPackages()
-
-proc findRosPackage*(name: static string): RosPackage =
+proc findRosPackage*(name: string): RosPackage =
   if name in rosPackages:
     result = rosPackages[name]
   else:
@@ -40,26 +41,73 @@ proc findRosPackage*(name: static string): RosPackage =
         """.dedent
     error(msg)
 
+proc findRosPackageOpt*(name: string): Option[RosPackage] =
+  if name in rosPackages:
+    some rosPackages[name]
+  else:
+    none RosPackage
+
+proc getDeps*(p: RosPackage): HashSet[RosPackage] =
+  let runDepsPath = p.prefix/"share/ament_index/resource_index/package_run_dependencies"/p.name
+  if fileExists(runDepsPath):
+    let depStrs = readFile(runDepsPath).split(";").toHashSet()
+    for depStr in depStrs:
+      let depPkg = findRosPackageOpt(depStr)
+      if depPkg.isSome:
+        result.incl depPkg.get()
+  else:
+    result = initHashSet[RosPackage]()
+
+proc getRecursiveDepsAux(p: RosPackage, res: var HashSet[RosPackage]) =
+  let deps = getDeps(p)
+  res.incl deps
+  for dep in deps - res:
+    getRecursiveDepsAux(dep, res)
+
+proc getRecursiveDeps*(p: RosPackage): seq[RosPackage] =
+  var deps = initHashSet[RosPackage]()
+  getRecursiveDepsAux(p, deps)
+  deps.toSeq()
+
 proc includeDir*(p: RosPackage): string =
   p.prefix/"include"/p.name
 
 proc libDir*(p: RosPackage): string =
   p.prefix/"lib"
 
-proc configure*(p: static RosPackage, libName: static string = "") {.compileTime.} =
-  const cFlag = "-I" & p.includeDir
-  when not SingleValueSetting.compileOptions.querySetting.contains(cFlag):
-    {.passC: cFlag.}
+proc newPragma(pragma, arg: string): NimNode =
+  nnkPragma.newTree(
+    nnkExprColonExpr.newTree(
+      ident(pragma),
+      newLit(arg)
+    )
+  )
 
-  const libDirFlag = "-L" & p.libDir
-  when not SingleValueSetting.linkOptions.querySetting.contains(libDirFlag):
-    {.passL: libDirFlag.}
+macro configure*(p: static RosPackage, libName: static string = ""): untyped =
+  result = newStmtList()
+  let cFlag = "-I" & p.includeDir
+  if not SingleValueSetting.compileOptions.querySetting.contains(cFlag):
+    result.add newPragma("passC", cFlag)
+
+  let libDirFlag = "-L" & p.libDir
+  if not SingleValueSetting.linkOptions.querySetting.contains(libDirFlag):
+    result.add newPragma("passL", libDirFlag)
   
-  const libName = if libName == "": p.name else: libName
-  when fileExists(p.libDir/"lib" & libName & ".so"):
-    const linkFlag = "-l" & libName
-    {.passL: linkFlag.}
+  let libName = if libName == "": p.name else: libName
+  if fileExists(p.libDir/"lib" & libName & ".so"):
+    let linkFlag = "-l" & libName
+    result.add newPragma("passL", linkFlag)
 
-proc configureRosPackage*(name: static string) {.compileTime.} =
-  const pkg = findRosPackage(name)
-  pkg.configure()
+macro configureRecursive*(p: static RosPackage): untyped =
+  result = newStmtList()
+  result.add genAst(p) do:
+    p.configure()
+  let deps = p.getRecursiveDeps()
+  for dep in deps.items:
+    result.add genAst(dep) do:
+      dep.configure()
+
+macro configureRosPackage*(name: static string): untyped =
+  let pkg = findRosPackage(name)
+  genAst(pkg) do:
+    pkg.configureRecursive()
