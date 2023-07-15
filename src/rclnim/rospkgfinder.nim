@@ -1,6 +1,6 @@
 import std/[
   tables, os, strutils, strformat, macros, compilesettings,
-  sets, options, genasts, sequtils]
+  sets, options, genasts, sequtils, xmlparser, xmltree]
 
 type
   RosPackage* = object
@@ -48,21 +48,24 @@ proc findRosPackageOpt*(name: string): Option[RosPackage] =
     none RosPackage
 
 proc getDeps*(p: RosPackage): HashSet[RosPackage] =
-  let runDepsPath = p.prefix/"share/ament_index/resource_index/package_run_dependencies"/p.name
-  if fileExists(runDepsPath):
-    let depStrs = readFile(runDepsPath).split(";").toHashSet()
-    for depStr in depStrs:
-      let depPkg = findRosPackageOpt(depStr)
-      if depPkg.isSome:
-        result.incl depPkg.get()
+  let xmlPath = p.prefix/"share"/p.name/"package.xml"
+  if fileExists(xmlPath):
+    let x = parseXml(readFile(xmlPath))
+    for c in x.items:
+      if c.kind != xnElement: continue
+      case c.tag
+      of "depend", "build_depend", "build_export_depend":
+        let depPkg = c.innerText.findRosPackageOpt()
+        if depPkg.isSome:
+          result.incl depPkg.get
   else:
     result = initHashSet[RosPackage]()
 
 proc getRecursiveDepsAux(p: RosPackage, res: var HashSet[RosPackage]) =
   let deps = getDeps(p)
-  res.incl deps
   for dep in deps - res:
     getRecursiveDepsAux(dep, res)
+  res.incl deps
 
 proc getRecursiveDeps*(p: RosPackage): seq[RosPackage] =
   var deps = initHashSet[RosPackage]()
@@ -113,3 +116,8 @@ macro configureRosPackage*(name: static string): untyped =
   let pkg = findRosPackage(name)
   genAst(pkg) do:
     pkg.configureRecursive()
+
+
+when isMainModule:
+  static:
+    echo findRosPackage("rcl").getRecursiveDeps()
