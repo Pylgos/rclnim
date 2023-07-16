@@ -1,6 +1,7 @@
 import "."/[utils, init, contexts, subscriptions, services, clients, waitsets, parameters]
 import std/[asyncdispatch, sets, locks, sequtils, tables, options]
-import concurrent/[smartptrs, channels, threaddestructors]
+import concurrent/[smartptrs, threaddestructors]
+import threading/channels
 
 
 type
@@ -85,10 +86,12 @@ proc waitLoop(self: ptr AsyncWaitSet) {.thread.} =
 proc initThreadAsyncWaitSet(context: Context) =
   gAsyncWaitSet.waitSet = newWaitSet(context)
   gAsyncWaitSet.event = newAsyncEvent()
-  gAsyncWaitSet.eventChannel = initChan(AsyncWaitSetEvent, 1)
-  gAsyncWaitSet.commandChannel = initChan(Command)
+  gAsyncWaitSet.eventChannel = newChan[AsyncWaitSetEvent](1)
+  gAsyncWaitSet.commandChannel = newChan[Command]()
+
   addEvent(gAsyncWaitSet.event) do(fd: AsyncFd) -> bool:
-    let ev = gAsyncWaitSet.eventChannel.recv()
+    var ev: AsyncWaitSetEvent
+    gAsyncWaitSet.eventChannel.recv(ev)
     case ev.kind
     of Ready:
       for waitable in ev.waitables:
