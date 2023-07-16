@@ -14,9 +14,6 @@ type
 
 exportDerefConverter Node
 
-proc `=destroy`(self: var NodeObj) =
-  `=destroy`(self.handle)
-
 proc newNode*(name: string, namespace = "", context = getGlobalContext()): Node {.newProc.} =
   result = newSharedPtr(NodeObj)
   result[].context = context

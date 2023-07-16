@@ -25,13 +25,12 @@ type
 
 proc `=copy`[T](dest: var CMessageSequence[T], src: CMessageSequence[T]) {.error.}
 
-proc `=destroy`[T](s: var CMessageSequence[T]) =
+proc `=destroy`[T](s: CMessageSequence[T]) =
   if s.data == nil: return
   for i in 0..<s.size:
     {.cast(raises: []).}:
       `=destroy`(s.data[i])
   c_free(s.data)
-  s.data = nil
 
 proc initCMessageSequence[T](size, cap: Natural): CMessageSequence[T] {.nodestroy.} =
   doAssert cap >= size

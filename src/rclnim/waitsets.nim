@@ -127,7 +127,7 @@ proc getReadyWaitables(waitSet: ptr rcl_wait_set_t, waitableIdxPair: WaitableIdx
     if isReady:
       result.add waitable
 
-proc `=destroy`(self: var WaitSetObj) =
+proc `=destroy`(self: WaitSetObj) =
   if self.handle != nil:
     self.context.removePreShutdownCallback(self.callbackId)
   `=destroy`(self.handle)

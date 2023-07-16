@@ -1,4 +1,4 @@
-import std/[strutils, locks]
+import std/locks
 import rospkgfinder
 
 when not defined(nimdoc):
