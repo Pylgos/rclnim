@@ -34,13 +34,13 @@ type
 
   ServiceHandleObj = object
     initialized: bool
-    lock: Lock
+    lock: ptr Lock
     node: NodeHandle
     rclService: rcl_service_t
   
   ClientHandleObj = object
     initialized: bool
-    lock: Lock
+    lock: ptr Lock
     node: NodeHandle
     rclCLient: rcl_client_t
 
@@ -69,64 +69,57 @@ disallowCopy PublisherHandleObj
 disallowCopy ServiceHandleObj
 disallowCopy ClientHandleObj
 
-proc `=destroy`(self: var ContextHandleObj) {.wrapDestructorError.} =
+proc `=destroy`(self: ContextHandleObj) {.wrapDestructorError.} =
   if self.initialized:
     withLock getRclGlobalLock():
       if rcl_context_is_valid(addr self.rclContext):
         wrapError rcl_shutdown(addr self.rclContext)
       wrapError rcl_context_fini(addr self.rclContext)
-  self.initialized = false
 
-proc `=destroy`(self: var GuardConditionHandleObj) {.wrapDestructorError.} =
+proc `=destroy`(self: GuardConditionHandleObj) {.wrapDestructorError.} =
   if self.initialized:
     withLock getRclGlobalLock():
       wrapError rcl_guard_condition_fini(addr self.rclGuardCondition)
-  self.initialized = false
   `=destroy`(self.context)
 
-proc `=destroy`(self: var WaitSetHandleObj) {.wrapDestructorError.} =
+proc `=destroy`(self: WaitSetHandleObj) {.wrapDestructorError.} =
   if self.initialized:
     withLock getRclGlobalLock():
       wrapError rcl_wait_set_fini(addr self.rclWaitSet)
-  self.initialized = false
   `=destroy`(self.context)
 
-proc `=destroy`(self: var NodeHandleObj) {.wrapDestructorError.} =
+proc `=destroy`(self: NodeHandleObj) {.wrapDestructorError.} =
   if self.initialized:
     withLock getRclGlobalLock():
       wrapError rcl_node_fini(addr self.rclNode)
-  self.initialized = false
   `=destroy`(self.context)
 
-proc `=destroy`(self: var SubscriptionHandleObj) {.wrapDestructorError.} =
+proc `=destroy`(self: SubscriptionHandleObj) {.wrapDestructorError.} =
   if self.initialized:
     withLock getRclGlobalLock():
       wrapError rcl_subscription_fini(addr self.rclSubscription, addr self.node.rclNode)
-    # self.lock.deinitLock()
-  self.initialized = false
   `=destroy`(self.node)
 
-proc `=destroy`(self: var PublisherHandleObj) {.wrapDestructorError.} =
+proc `=destroy`(self: PublisherHandleObj) {.wrapDestructorError.} =
   if self.initialized:
     withLock getRclGlobalLock():
       wrapError rcl_publisher_fini(addr self.rclPublisher, addr self.node.rclNode)
-  self.initialized = false
   `=destroy`(self.node)
 
-proc `=destroy`(self: var ServiceHandleObj) {.wrapDestructorError.} =
+proc `=destroy`(self: ServiceHandleObj) {.wrapDestructorError.} =
   if self.initialized:
     withLock getRclGlobalLock():
       wrapError rcl_service_fini(addr self.rclService, addr self.node.rclNode)
-    self.lock.deinitLock()
-  self.initialized = false
+    self.lock[].deinitLock()
+    self.lock.deallocShared()
   `=destroy`(self.node)
 
-proc `=destroy`(self: var ClientHandleObj) {.wrapDestructorError.} =
+proc `=destroy`(self: ClientHandleObj) {.wrapDestructorError.} =
   if self.initialized:
     withLock getRclGlobalLock():
       wrapError rcl_client_fini(addr self.rclClient, addr self.node.rclNode)
-    self.lock.deinitLock()
-  self.initialized = false
+    self.lock[].deinitLock()
+    self.lock.deallocShared()
   `=destroy`(self.node)
 
 proc newContextHandle*(
@@ -249,14 +242,15 @@ proc newServiceHandle*(
     opts.qos = qos.toRmw()
     wrapError rcl_service_init(
       addr result.rclService, node.getRclNode(), cast[ptr rosidl_service_type_support_t](typeSupport), serviceName, addr opts)
-  result.lock.initLock()
+  result.lock = createShared(Lock)
+  result.lock[].initLock()
   result.initialized = true
 
 proc getRclService*(s: ServiceHandle): ptr rcl_service_t =
   addr s.rclService
 
 proc getLock*(s: ServiceHandle): var Lock =
-  s.lock
+  s.lock[]
 
 
 proc newClientHandle*(
@@ -272,11 +266,12 @@ proc newClientHandle*(
     opts.qos = qos.toRmw()
     wrapError rcl_client_init(
       addr result.rclClient, node.getRclNode(), cast[ptr rosidl_service_type_support_t](typeSupport), serviceName, addr opts)
-  result.lock.initLock()
+  result.lock = createShared(Lock)
+  result.lock[].initLock()
   result.initialized = true
 
 proc getRclClient*(s: ClientHandle): ptr rcl_client_t =
   addr s.rclClient
 
 proc getLock*(s: ClientHandle): var Lock =
-  s.lock
+  s.lock[]
