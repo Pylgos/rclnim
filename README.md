@@ -37,7 +37,6 @@ try:
   waitFor main()
 except ShutdownError:
   echo "Shutting down"
-
 ```
 
 ## Dependencies
@@ -61,20 +60,20 @@ except ShutdownError:
 - Signal handling
   - Linux
 - Typesupport
-  - rosidl_typesupport_c wrapper (slow because it converts  Nim objects to C structures)
+  - rosidl_typesupport_c wrapper (slow because it converts Nim objects to C structures)
 - ROS Distributions
   - Humble
 
 ## TODO
-- Action
-- Parameter client
-- Callback-based executor
+- Support Action
+- Implement Parameter client
+- Implement Callback-based executor
 - Generate FastDDS typesupport for nim objects with macros
-- Component support
-- Allocator support
-- Zero-copy intra-process communications
-- Iron
-- Colcon support
+- Support component
+- Support allocator
+- Implement zero-copy intra-process communications
+- Support ROS2 Iron
+- Support colcon
 
 ## License
 
