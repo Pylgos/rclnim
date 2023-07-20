@@ -27,8 +27,7 @@ export
   subscriptions,
   parameters
 
-
 when defined(nimdoc):
   import ./rclnim/[
-    asyncdispatchsupports
+    chronossupports
   ]

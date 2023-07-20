@@ -1,10 +1,6 @@
-discard """
-  timeout: 60
-  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
-"""
-
 import rclnim
-import rclnim/defaultasync
+import rclnim/chronossupport
+import chronos
 import std/random
 
 randomize()

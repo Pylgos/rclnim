@@ -1,9 +1,6 @@
-discard """
-  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
-"""
-
 import rclnim
-import rclnim/defaultasync
+import rclnim/chronossupport
+import chronos
 importInterface std_msgs/msg/int64_multi_array
 
 rclnim.init()

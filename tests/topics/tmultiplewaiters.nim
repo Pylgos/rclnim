@@ -1,11 +1,11 @@
 discard """
   timeout: 10
   exitcode: 1
-  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
 """
 
 import rclnim
-import rclnim/defaultasync
+import rclnim/chronossupport
+import chronos
 importInterface builtin_interfaces/msg/time
 
 rclnim.init()

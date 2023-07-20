@@ -1,9 +1,6 @@
-discard """
-  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
-"""
-
 import rclnim
-import rclnim/defaultasync
+import rclnim/chronossupport
+import chronos
 importInterface sensor_msgs/msg/[point_cloud2, point_field]
 importInterface std_msgs/msg/header
 importInterface builtin_interfaces/msg/time
