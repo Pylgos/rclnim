@@ -1,6 +1,9 @@
+discard """
+  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
+"""
+
 import rclnim
-import rclnim/asyncdispatchsupports
-import std/asyncdispatch
+import rclnim/defaultasync
 importInterface builtin_interfaces/msg/time
 
 rclnim.init()
@@ -41,5 +44,3 @@ proc main() {.async.} =
   await all [pubMain(), sub1Main(), sub2Main()]
 
 waitFor main()
-setGlobalDispatcher(nil)
-GC_fullCollect()

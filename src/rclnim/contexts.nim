@@ -15,6 +15,8 @@ type
 
   Context* = SharedPtr[ContextObj]
 
+  ShutdownError* = object of CatchableError
+
 exportDerefConverter Context
 
 proc shutdown*(self: var ContextObj) =
