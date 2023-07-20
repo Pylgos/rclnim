@@ -7,8 +7,8 @@ ROS2 client library for Nim language.
 
 ```nim
 import rclnim
-import rclnim/asyncdispatchsupports
-import std/asyncdispatch
+import rclnim/chronossupport
+import chronos
 importInterface std_msgs/msg/int64
 
 rclnim.init()
