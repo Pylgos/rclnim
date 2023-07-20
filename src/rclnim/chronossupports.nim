@@ -3,8 +3,8 @@ import std/[sets, locks, sequtils, tables, options, os]
 import concurrent/[smartptrs, threaddestructors]
 import threading/[channels, atomics]
 import chronos
-import chronos/[osutils]
-from posix import EINVAL, EAGAIN, read, write, close
+import chronos/[osutils, oserrno]
+from posix import read, write, close
 
 
 type EventFD = distinct cint
@@ -36,12 +36,12 @@ proc readAsync(e: EventFD): Future[uint64] =
           # If errorCode == EAGAIN it means that reading operation is already
           # pending and so some other consumer reading eventfd or pipe end, in
           # this case we going to ignore error and wait for another event.
-          if errorCode.cint != EAGAIN:
+          if errorCode != EAGAIN:
             discard removeReader2(AsyncFD(eventFd))
             retFuture.fail(newException(AsyncError, osErrorMsg(errorCode)))
         elif res != sizeof(data):
           discard removeReader2(AsyncFD(eventFd))
-          retFuture.fail(newException(AsyncError, osErrorMsg(EINVAL.OSErrorCode)))
+          retFuture.fail(newException(AsyncError, osErrorMsg(EINVAL)))
         else:
           let eres = removeReader2(AsyncFD(eventFd))
           if eres.isErr():
