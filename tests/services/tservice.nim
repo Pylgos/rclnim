@@ -1,10 +1,11 @@
 discard """
   timeout: 60
+  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
 """
 
 import rclnim
-import rclnim/asyncdispatchsupports
-import std/[asyncdispatch, random]
+import rclnim/defaultasync
+import std/random
 
 randomize()
 
@@ -40,6 +41,3 @@ try:
   waitFor asyncMain()
 except ShutdownError:
   echo "shutting down"
-
-setGlobalDispatcher(nil)
-GC_fullCollect()

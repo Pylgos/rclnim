@@ -1,6 +1,9 @@
+discard """
+  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
+"""
+
 import rclnim
-import rclnim/asyncdispatchsupports
-import std/asyncdispatch
+import rclnim/defaultasync
 importInterface sensor_msgs/msg/[point_cloud2, point_field]
 importInterface std_msgs/msg/header
 importInterface builtin_interfaces/msg/time
@@ -29,5 +32,3 @@ proc main() {.async.} =
   await all [pubMain(), subMain()]
 
 waitFor main()
-setGlobalDispatcher(nil)
-GC_fullCollect()

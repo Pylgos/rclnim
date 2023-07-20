@@ -1,7 +1,10 @@
+discard """
+  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
+"""
+
 import rclnim
-import rclnim/asyncdispatchsupports
-import std/asyncdispatch
-importInterface std_msgs/msg/string
+import rclnim/defaultasync
+importInterface std_msgs/msg/string, String as StringMsg
 
 rclnim.init()
 
@@ -9,12 +12,12 @@ let node = newNode("test_node")
 var qos = SystemDefaultQoS
 qos.reliability = Reliable
 qos.depth = 100
-let pub = node.createPublisher(String, "test_topic", qos)
-let sub = node.createSubscription(String, "test_topic", qos)
+let pub = node.createPublisher(StringMsg, "test_topic", qos)
+let sub = node.createSubscription(StringMsg, "test_topic", qos)
 
 proc pubMain() {.async.} =
   for i in 0..<100:
-    let msg = String(data: $i & "'th message!")
+    let msg = StringMsg(data: $i & "'th message!")
     pub.publish(msg)
     echo "published: ", msg
     await sleepAsync 1
@@ -29,5 +32,3 @@ proc main() {.async.} =
   await all [pubMain(), subMain()]
 
 waitFor main()
-setGlobalDispatcher(nil)
-GC_fullCollect()

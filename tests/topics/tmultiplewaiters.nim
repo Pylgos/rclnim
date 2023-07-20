@@ -1,11 +1,11 @@
 discard """
   timeout: 10
   exitcode: 1
+  matrix: "-d:asyncBackend=asyncdispatch; -d:asyncBackend=chronos"
 """
 
-import std/[asyncdispatch]
 import rclnim
-import rclnim/asyncdispatchsupports
+import rclnim/defaultasync
 importInterface builtin_interfaces/msg/time
 
 rclnim.init()
@@ -27,5 +27,3 @@ proc asyncMain {.async.} =
   await fut2
 
 waitFor asyncMain()
-setGlobalDispatcher(nil)
-GC_fullCollect()

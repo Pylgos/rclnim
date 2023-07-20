@@ -1,4 +1,4 @@
-import "."/[utils, init, contexts, subscriptions, services, clients, waitsets, parameters]
+import "."/[utils, init, subscriptions, services, clients, waitsets, parameters, contexts]
 import std/[asyncdispatch, sets, locks, sequtils, tables, options]
 import concurrent/[smartptrs, threaddestructors]
 import threading/channels
@@ -35,8 +35,6 @@ type
     eventChannel: Chan[AsyncWaitSetEvent]
     thread: Thread[ptr AsyncWaitSet]
     shutdown: bool
-
-  ShutdownError* = object of CatchableError
 
 disallowCopy AsyncWaitSet
 
