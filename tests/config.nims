@@ -1,3 +1,4 @@
 switch("path", "$projectDir/../../src")
 switch("threads", "on")
-switch("gc", "orc")
+switch("mm", "arc")
+switch("define", "concurrent.smartptrs.leakCheck")

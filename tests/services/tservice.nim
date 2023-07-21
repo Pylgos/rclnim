@@ -20,18 +20,18 @@ proc serviceTask {.async.} =
     if i mod 100 == 0: echo i * 100 div NumIteration, "%"
     let (_, sender) = await srv.recv()
     sender.send(EmptyResponse())
-    await sleepAsync rand(10)
+    await sleepAsync rand(10).milliseconds
   echo "service done"
 
 proc clientTask {.async.} =
   for i in 0..<NumIteration:
     let receiver = cli.send(EmptyRequest())
     let _ = await receiver.recv()
-    await sleepAsync rand(10)
+    await sleepAsync rand(10).milliseconds
   echo "client done"
 
 proc asyncMain {.async.} =
-  await all [serviceTask(), clientTask()]
+  await allFutures [serviceTask(), clientTask()]
 
 try:
   waitFor asyncMain()

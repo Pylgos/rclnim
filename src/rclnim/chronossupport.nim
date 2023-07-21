@@ -215,9 +215,10 @@ proc wait*(waitable: Waitable): Future[void] =
 
 proc recv*[T](self: Subscription[T]): Future[T] {.async.} =
   while true:
-    await self.toBase.waitable.wait()
     if self.take(result):
       return
+    else:
+      await self.waitable.wait()
 
 proc recv*[T](self: Service[T]): Future[tuple[request: T.Request, sender: ServiceSend[T]]] {.async.} =
   while true:
@@ -226,7 +227,7 @@ proc recv*[T](self: Service[T]): Future[tuple[request: T.Request, sender: Servic
       result.sender = sender.get()
       break
     else:
-      await self.toBase.waitable.wait()
+      await self.waitable.wait()
 
 proc recv*[T](self: ClientRecv[T]): Future[T.Response] {.async.} =
   while true:
