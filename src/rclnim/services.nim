@@ -15,7 +15,8 @@ type
   Service*[T] = SharedPtr[ServiceObj[T]]
 
   ServiceSend*[T] = object
-    service: Service[T]
+    dummy: Service[T] # HACK: compiler bug workaround https://github.com/nim-lang/Nim/issues/22305
+    service: ptr rcl_service_t
     requestId: rmw_request_id_t
 
 proc createService*[T: SomeService](node: Node, serviceName: string, qos: QoSProfile): Service[T] =
@@ -44,7 +45,7 @@ proc takeRequest*[T: SomeService](self: Service[T], req: var T.Request): Option[
   of RCL_RET_OK:
     cMessageToNim(cReq, req)
     result = some ServiceSend[T](
-      service: self,
+      service: self.handle.getRclService(),
       requestId: info.request_id
     )
   of RCL_RET_SERVICE_TAKE_FAILED:
@@ -55,4 +56,4 @@ proc takeRequest*[T: SomeService](self: Service[T], req: var T.Request): Option[
 proc send*[T: SomeService](self: ServiceSend[T], resp: T.Response) =
   var cResp: T.Response.CType
   nimMessageToC(resp, cResp)
-  wrapError rcl_send_response(self.service[].handle.getRclService(), unsafeAddr self.requestId, addr cResp)
+  wrapError rcl_send_response(self.service, unsafeAddr self.requestId, addr cResp)
