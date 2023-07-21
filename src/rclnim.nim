@@ -29,5 +29,5 @@ export
 
 when defined(nimdoc):
   import ./rclnim/[
-    chronossupports
+    chronossupport
   ]
