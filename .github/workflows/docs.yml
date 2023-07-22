@@ -45,15 +45,15 @@ jobs:
     - run: nimble install -y --verbose
     - run: |
         source /opt/ros/humble/setup.bash
-        nimble doc \
+        cd src
+        nim doc \
           --index:on \
           --project \
           --git.url:https://github.com/${{ github.repository }} \
           --git.commit:main \
           --git.devel:main \
-          --out:_site \
-          --docRoot:$(realpath ./src) \
-          src/rclnim.nim || true
+          --out:../_site \
+          rclnim.nim || true
       shell: bash
     - run: cp _site/${{ github.event.repository.name }}.html _site/index.html
 
