@@ -79,19 +79,19 @@ type
     of Stop:
       discard
   
-  AsyncWaitSetEventKind* = enum
+  AsyncWaitSetEventKind = enum
     Ready
     Shutdown
     Stop
   
-  AsyncWaitSetEvent* = object
+  AsyncWaitSetEvent = object
     case kind*: AsyncWaitSetEventKind
     of Ready:
       waitables: seq[Waitable]
     of Shutdown, Stop:
       discard
 
-  AsyncWaitSet* = object
+  AsyncWaitSet = object
     waitSet: WaitSet
     event: EventFD
     waiters: Table[Waitable, Future[void]]
@@ -187,10 +187,9 @@ proc initThreadAsyncWaitSet(context: Context) =
   gAsyncWaitSet.commandChannel = newChan[Command]()
   eventLoop(addr gAsyncWaitSet)
   gAsyncWaitSet.thread.createThread(waitLoop, addr gAsyncWaitSet)
-  {.cast(gcsafe).}:
-    addThreadDestructor() do():
-      {.cast(gcsafe).}:
-        `=destroy`(gAsyncWaitSet)
+  addThreadDestructor() do():
+    {.cast(gcsafe).}:
+      `=destroy`(gAsyncWaitSet)
 
 proc prepareThreadAsyncWaitSet(context = getGlobalContext()) =
   if gAsyncWaitSet.waitSet == nil:
