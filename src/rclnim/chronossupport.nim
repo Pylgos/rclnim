@@ -1,71 +1,10 @@
 import "."/[utils, init, contexts, subscriptions, services, clients, waitsets, parameters]
 import std/[sets, locks, sequtils, tables, options, os]
-import concurrent/[smartptrs, threaddestructors]
-import threading/[channels, atomics]
+import concurrent/[smartptrs, threaddestructors, channels]
+import threading/atomics
 import chronos
-import chronos/[osutils, oserrno]
-from posix import read, write, close
+import chronos/[osutils, oserrno, threadsync]
 
-
-type EventFD = distinct cint
-
-proc eventfd(initVal: cuint, flags: cint): cint {.importc, header: "<sys/eventfd.h>"}
-
-proc createEventfd(): EventFD =
-  eventfd(0, 0).EventFd
-
-proc write(e: EventFD, val: uint64) =
-  var v = val
-  if write(e.cint, addr v, 8) < 0:
-    raiseOsError(osLastError())
-
-proc close(e: EventFD) =
-  discard close(e.cint)
-  if getThreadDispatcher().contains(e.AsyncFD):
-    discard unregister2(e.AsyncFD)
-
-proc readAsync(e: EventFD): Future[uint64] =
-    var retFuture = newFuture[uint64]("chronossupports.readAsync")
-    let eventFd = e.cint
-    proc continuation(udata: pointer) {.gcsafe, raises: [].} =
-      if not(retFuture.finished()):
-        var data: uint64
-        let res = handleEintr(read(eventFd, addr data, sizeof(uint64)))
-        if res < 0:
-          let errorCode = osLastError()
-          # If errorCode == EAGAIN it means that reading operation is already
-          # pending and so some other consumer reading eventfd or pipe end, in
-          # this case we going to ignore error and wait for another event.
-          if errorCode != EAGAIN:
-            discard removeReader2(AsyncFD(eventFd))
-            retFuture.fail(newException(AsyncError, osErrorMsg(errorCode)))
-        elif res != sizeof(data):
-          discard removeReader2(AsyncFD(eventFd))
-          retFuture.fail(newException(AsyncError, osErrorMsg(EINVAL)))
-        else:
-          let eres = removeReader2(AsyncFD(eventFd))
-          if eres.isErr():
-            retFuture.fail(newException(AsyncError, osErrorMsg(eres.error)))
-          else:
-            retFuture.complete(data)
-
-    proc cancellation(udata: pointer) {.gcsafe, raises: [].} =
-      if not(retFuture.finished()):
-        # Future is already cancelled so we ignore errors.
-        discard removeReader2(AsyncFD(eventFd))
-
-    let loop = getThreadDispatcher()
-    if not(loop.contains(AsyncFD(eventFd))):
-      let res = register2(AsyncFD(eventFd))
-      if res.isErr():
-        retFuture.fail(newException(AsyncError, osErrorMsg(res.error)))
-        return retFuture
-    let res = addReader2(AsyncFD(eventFd), continuation)
-    if res.isErr():
-      retFuture.fail(newException(AsyncError, osErrorMsg(res.error)))
-      return retFuture
-    retFuture.cancelCallback = cancellation
-    retFuture
 
 type
   CommandKind = enum
@@ -93,7 +32,7 @@ type
 
   AsyncWaitSet = object
     waitSet: WaitSet
-    event: EventFD
+    event: ThreadSignalPtr
     waiters: Table[Waitable, Future[void]]
     commandChannel: Chan[Command]
     eventChannel: Chan[AsyncWaitSetEvent]
@@ -110,7 +49,7 @@ proc `=destroy`(self: var AsyncWaitSet) {.wrapDestructorError.} =
     self.waitSet.interrupt()
     self.thread.joinThread()
     waitFor(self.eventLoop)
-    self.event.close()
+    discard self.event.close()
   destroyFields(self)
 
 var gAsyncWaitSet {.threadvar.}: AsyncWaitSet
@@ -130,7 +69,7 @@ proc waitLoop(self: ptr AsyncWaitSet) {.thread.} =
           waitables.incl cmd.waitable
         of Stop:
           self.eventChannel.send(AsyncWaitSetEvent(kind: Stop))
-          self.event.write(1)
+          discard self.event.fireSync()
           return
       else:
         break
@@ -143,10 +82,10 @@ proc waitLoop(self: ptr AsyncWaitSet) {.thread.} =
         for readyWaitable in res.readyWaitables:
           waitables.excl readyWaitable
         self.eventChannel.send(AsyncWaitSetEvent(kind: Ready, waitables: res.readyWaitables))
-        self.event.write(1)
+        discard self.event.fireSync()
     of WaitResultKind.Shutdown:
       self.eventChannel.send(AsyncWaitSetEvent(kind: Shutdown))
-      self.event.write(1)
+      discard self.event.fireSync()
       return
     of WaitResultKind.Timeout:
       discard
@@ -155,14 +94,14 @@ proc eventLoop(p: ptr AsyncWaitSet) =
   proc continuation(userdata: pointer) {.nimcall, gcsafe, raises: [].} =
     let p = cast[ptr AsyncWaitSet](userdata)
     try:
-      var ev: AsyncWaitSetEvent
-      p.eventChannel.recv(ev)
+      var ev = p.eventChannel.recv()
       case ev.kind
       of Ready:
         for waitable in ev.waitables:
-          p.waiters[waitable].complete()
-          p.waiters.del waitable
-          p.event.readAsync().addCallback(continuation, userdata)
+          if waitable in p.waiters:
+            p.waiters[waitable].complete()
+            p.waiters.del waitable
+        p.event.wait().addCallback(continuation, userdata)
       of Shutdown:
         for waiter in p.waiters.mvalues:
           waiter.fail(newException(ShutdownError, "halting"))
@@ -181,18 +120,19 @@ proc eventLoop(p: ptr AsyncWaitSet) =
       p.waiters.clear()
       p.eventLoop.complete()
   p.eventLoop = newFuture[void]("chronossupports.eventLoop")
-  p.event.readAsync().addCallback(continuation, p)
+  p.event.wait().addCallback(continuation, p)
 
 proc initThreadAsyncWaitSet(context: Context) =
   gAsyncWaitSet.waitSet = newWaitSet(context)
-  gAsyncWaitSet.event = createEventfd()
-  gAsyncWaitSet.eventChannel = newChan[AsyncWaitSetEvent](1)
-  gAsyncWaitSet.commandChannel = newChan[Command]()
+  gAsyncWaitSet.event = ThreadSignalPtr.new().tryGet()
+  gAsyncWaitSet.eventChannel = initChan(AsyncWaitSetEvent, 1)
+  gAsyncWaitSet.commandChannel = initChan(Command)
   eventLoop(addr gAsyncWaitSet)
   gAsyncWaitSet.thread.createThread(waitLoop, addr gAsyncWaitSet)
   addThreadDestructor() do():
     {.cast(gcsafe).}:
       `=destroy`(gAsyncWaitSet)
+      wasMoved(gAsyncWaitSet)
 
 proc prepareThreadAsyncWaitSet(context = getGlobalContext()) =
   if gAsyncWaitSet.waitSet == nil:
@@ -211,6 +151,11 @@ proc wait*(waitable: Waitable): Future[void] =
       "given waitable is already waiting by current thread"
 
   result = newFuture[void]("asyncsupport.wait")
+
+  proc cancellation(udata: pointer) {.gcsafe, raises: [].} =
+    gAsyncWaitSet.waiters.del waitable
+
+  result.cancelCallback = cancellation
   gAsyncWaitSet.waiters[waitable] = result
   gAsyncWaitSet.commandChannel.send Command(kind: Add, waitable: waitable)
   gAsyncWaitSet.waitSet.interrupt()
