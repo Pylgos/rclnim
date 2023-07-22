@@ -175,8 +175,11 @@ proc eventLoop(p: ptr AsyncWaitSet) =
         p.waiters.clear()
         p.eventLoop.complete()
         return
-    except CatchableError:
-      discard
+    except CatchableError as e:
+      for waiter in p.waiters.mvalues:
+        waiter.fail(e)
+      p.waiters.clear()
+      p.eventLoop.complete()
   p.eventLoop = newFuture[void]("chronossupports.eventLoop")
   p.event.readAsync().addCallback(continuation, p)
 
