@@ -113,7 +113,7 @@ template ptrAsArray[T](p: ptr T): ptr UncheckedArray[T] =
   cast[ptr UncheckedArray[T]](p)
 
 proc getReadyWaitables(waitSet: ptr rcl_wait_set_t, waitableIdxPair: WaitableIdxPairSeq): seq[Waitable] =
-  result = newSeq[Waitable](waitableIdxPair.len)
+  result = newSeq[Waitable]()
   for i, (waitable, idx) in waitableIdxPair:
     var isReady = false
 
@@ -128,7 +128,7 @@ proc getReadyWaitables(waitSet: ptr rcl_wait_set_t, waitableIdxPair: WaitableIdx
       isReady = waitSet.services.ptrAsArray[idx] != nil
 
     if isReady:
-      result[i] = waitable
+      result.add waitable
 
 proc `=destroy`(self: WaitSetObj) =
   if self.handle != nil:
