@@ -37,8 +37,8 @@ proc parseModulePath(n: NimNode): tuple[pkg, kind, name: NimNode] =
 
 proc parseImport(nodes: seq[NimNode]): seq[Module] =
   var modules = initTable[string, Module]()
-  var typeAliases: Table[string, Table[string, NimNode]]
-  var typNodeByAliasNode: Table[string, NimNode] # just for better diagnostics
+  var typeAliases = initTable[string, Table[string, NimNode]]()
+  var typNodeByAliasNode = initTable[string, NimNode]() # just for better diagnostics
 
   proc addModule(name: string, m: Module) =
     if name in modules:

@@ -1,4 +1,4 @@
-import "."/[rcl, errors, handles, waitsets, nodes, qosprofiles, typesupports, rosinterfaces]
+import "."/[rcl, errors, handles, waitsets, nodes, qosprofiles, typesupports, rosinterfaces, utils]
 import concurrent/smartptrs
 import std/[locks, options]
 
@@ -35,8 +35,8 @@ proc waitable*(self: ServiceBase | Service): Waitable =
 
 proc takeRequest*[T: SomeService](self: Service[T], req: var T.Request): Option[ServiceSend[T]] =
   var
-    cReq: T.Request.CType
-    info: rmw_service_info_t
+    cReq = default(T.Request.CType)
+    info = default(rmw_service_info_t)
   var ret: rcl_ret_t
   withLock self[].handle.getLock():
     withLock getRclGlobalLock():
@@ -44,16 +44,17 @@ proc takeRequest*[T: SomeService](self: Service[T], req: var T.Request): Option[
   case ret
   of RCL_RET_OK:
     cMessageToNim(cReq, req)
-    result = some ServiceSend[T](
+    some ServiceSend[T](
       service: self.handle.getRclService(),
       requestId: info.request_id
     )
   of RCL_RET_SERVICE_TAKE_FAILED:
-    result = none ServiceSend[T]
+    none ServiceSend[T]
   else:
     wrapError ret
+    unreachable()
 
 proc send*[T: SomeService](self: ServiceSend[T], resp: T.Response) =
-  var cResp: T.Response.CType
+  var cResp = default(T.Response.CType)
   nimMessageToC(resp, cResp)
   wrapError rcl_send_response(self.service, unsafeAddr self.requestId, addr cResp)

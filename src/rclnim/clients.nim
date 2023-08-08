@@ -38,17 +38,17 @@ proc waitable*[T](self: ClientRecv[T]): Waitable =
   self.client[].waitable
 
 proc send*[T](self: Client[T], req: T.Request): ClientRecv[T] =
-  var cReq: T.Request.CType
+  var cReq = default(T.Request.CType)
   nimMessageToC(req, cReq)
-  var num: int64
+  var num: int64 = 0
   wrapError rcl_send_request(self[].handle.getRclClient(), addr cReq, addr num)
   result.client = self
   result.sequenceNum = num
 
 proc takeResponse*[T](self: ClientRecv[T], resp: var T.Response): bool =
   var
-    cResp: T.Response.CType
-    info: rmw_service_info_t
+    cResp = default(T.Response.CType)
+    info = default(rmw_service_info_t)
     ret: rcl_ret_t
   info.request_id.sequence_number = self.sequenceNum.int64
   withLock self.client[].handle.getLock():
@@ -58,8 +58,9 @@ proc takeResponse*[T](self: ClientRecv[T], resp: var T.Response): bool =
   case ret
   of RCL_RET_OK:
     cMessageToNim(cResp, resp)
-    result = true
+    true
   of RCL_RET_CLIENT_TAKE_FAILED:
-    result = false
+    false
   else:
     wrapError ret
+    unreachable()

@@ -168,6 +168,7 @@ proc recv*[T](self: Subscription[T]): Future[T] {.async.} =
       await self.waitable.wait()
 
 proc recv*[T](self: Service[T]): Future[tuple[request: T.Request, sender: ServiceSend[T]]] {.async.} =
+  result = default((T.Request, ServiceSend[T]))
   while true:
     let sender = self.takeRequest(result.request)
     if sender.isSome:
