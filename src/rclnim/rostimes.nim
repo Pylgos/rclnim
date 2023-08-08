@@ -17,13 +17,13 @@ func `-`*(a, b: RosTime): Duration =
 func `-`*(a: RosTime, b: Duration): RosTime =
   RosTime.init(a.nanoseconds - b.inNanoseconds)
 
-func `-=`*(a: var RosTime, b: Duration): RosTime =
+func `-=`*(a: var RosTime, b: Duration) =
   a = a - b
 
 func `+`*(a: RosTime, b: Duration): RosTime =
   RosTime.init(a.nanoseconds + b.inNanoseconds)
 
-func `+=`*(a: var RosTime, b: Duration): RosTime =
+func `+=`*(a: var RosTime, b: Duration) =
   a = a + b
 
 func `<`*(a, b: RosTime): bool =

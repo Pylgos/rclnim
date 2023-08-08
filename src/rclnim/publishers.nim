@@ -23,6 +23,6 @@ proc handle*(self: PublisherBase | Publisher): PublisherHandle =
   self[].handle
 
 proc publish*[T](pub: Publisher[T], msg: T) =
-  var cMsg: T.CType
+  var cMsg = default(T.CType)
   nimMessageToC(msg, cMsg)
   wrapError rcl_publish(pub.handle.getRclPublisher(), addr cMsg, nil)

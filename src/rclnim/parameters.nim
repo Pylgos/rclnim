@@ -101,7 +101,7 @@ proc getParam(self: var ParamServerObj, name: string): ParamValue =
     raise newException(ValueError):
       "cannot get parameter before endDeclaration is called"
   try:
-    result = self.params[name].value
+    self.params[name].value
   except KeyError:
     raise newException(UndeclaredParamError):
       "attempted to get undeclared parameter"
@@ -109,31 +109,34 @@ proc getParam(self: var ParamServerObj, name: string): ParamValue =
 proc task(self: ptr ParamServerObj) =
   self.executor.onRequest(self.getSrv):
     withLock self.paramsLock:
-      for name in request.names:
+      result.values = newSeq[ParameterValue](request.names.len)
+      for i, name in request.names:
         if name in self.params:
-          result.values.add self[].getParam(name).toMsg()
+          result.values[i] = self[].getParam(name).toMsg()
         else:
-          result.values.add ParameterValue(type: ParameterType.PARAMETER_NOT_SET)
+          result.values[i] = ParameterValue(type: ParameterType.PARAMETER_NOT_SET)
   
   self.executor.onRequest(self.getTypesSrv):
     withLock self.paramsLock:
-      for name in request.names:
+      result.types = newSeq[uint8](request.names.len)
+      for i, name in request.names:
         if name in self.params:
-          result.types.add self[].getParam(name).toMsg().type
+          result.types[i] = self[].getParam(name).toMsg().type
         else:
-          result.types.add ParameterType.PARAMETER_NOT_SET
+          result.types[i] = ParameterType.PARAMETER_NOT_SET
   
   self.executor.onRequest(self.setSrv):
     withLock self.paramsLock:
-      for p in request.parameters:
+      result.results = newSeq[SetParametersResult](request.parameters.len)
+      for i, p in request.parameters:
         if p.name in self.params:
           try:
             self[].setParam(p.name, p.value.toParam(), notifySelf = true)
-            result.results.add SetParametersResult(successful: true)
+            result.results[i] = SetParametersResult(successful: true)
           except ValueError as e:
-            result.results.add SetParametersResult(successful: false, reason: e.msg)
+            result.results[i] = SetParametersResult(successful: false, reason: e.msg)
         else:
-          result.results.add SetParametersResult(successful: false, reason: "parameter is not declared")
+          result.results[i] = SetParametersResult(successful: false, reason: "parameter is not declared")
 
   self.executor.onRequest(self.setAtomicallySrv):
     withLock self.paramsLock:
@@ -152,23 +155,26 @@ proc task(self: ptr ParamServerObj) =
           canSet = false
           reason = "parameter is not declared"
       if canSet:
-        result.result = SetParametersResult(successful: true)
         for p in request.parameters:
           self[].setParam(p.name, p.value.toParam(), notifySelf = true)
+        result.result = SetParametersResult(successful: true)
       else:
         result.result = SetParametersResult(successful: false, reason: reason)
 
   self.executor.onRequest(self.describeSrv):
     withLock self.paramsLock:
-      for name in request.names:
+      result.descriptors = newSeq[ParameterDescriptor](request.names.len)
+      for i, name in request.names:
         if name in self.params:
-          result.descriptors.add self.params[name].desc.toMsg()
+          result.descriptors[i] = self.params[name].desc.toMsg()
         else:
-          result.descriptors.add ParameterDescriptor()
+          result.descriptors[i] = ParameterDescriptor()
   
   self.executor.onRequest(self.listSrv):
     const sep = '.'
     withLock self.paramsLock:
+      result.result.names = newSeq[string]()
+      result.result.prefixes = newSeq[string]()
       for (name, info) in self.params.pairs:
         let getAll =
           request.prefixes.len == 0 and

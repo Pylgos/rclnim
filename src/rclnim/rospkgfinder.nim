@@ -11,6 +11,7 @@ type
 
 
 proc collectAllRosPackages(): RosPackageTable =
+  result = initTable[string, RosPackage]()
   let prefixes = getEnv("AMENT_PREFIX_PATH").split(':')
   for prefix in prefixes:
     let resourceDir = prefix/"share/ament_index/resource_index/packages"
@@ -22,6 +23,7 @@ proc collectAllRosPackages(): RosPackageTable =
 const rosPackages = collectAllRosPackages()
 
 proc findRosPackage*(name: string): RosPackage =
+  result = default(RosPackage)
   if name in rosPackages:
     result = rosPackages[name]
   else:
@@ -48,6 +50,7 @@ proc findRosPackageOpt*(name: string): Option[RosPackage] =
     none RosPackage
 
 proc getDeps*(p: RosPackage): HashSet[RosPackage] =
+  result = initHashSet[RosPackage]()
   let xmlPath = p.prefix/"share"/p.name/"package.xml"
   if fileExists(xmlPath):
     let x = parseXml(readFile(xmlPath))

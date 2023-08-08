@@ -68,6 +68,7 @@ proc toWaitable*(s: ClientHandle): Waitable =
   result[] = WaitableObj(kind: WaitableKind.Client, client: s)
 
 proc count*(waitables: openArray[Waitable]): tuple[guardConditions, subscriptions, services, clients: Natural] =
+  result = (0, 0, 0, 0)
   for waitable in waitables:
     case waitable.kind
     of WaitableKind.GuardCondition:
@@ -80,7 +81,7 @@ proc count*(waitables: openArray[Waitable]): tuple[guardConditions, subscription
       inc result.clients
 
 proc addToRclWaitSet(waitSet: ptr rcl_wait_set_t, waitable: Waitable): int =
-  var idx: csize_t
+  var idx: csize_t = 0
   case waitable.kind
   of WaitableKind.GuardCondition:
     wrapError rcl_wait_set_add_guard_condition(waitSet, waitable.guardCondition.getRclGuardCondition(), addr idx)
@@ -103,15 +104,17 @@ proc fillWaitSet(self: WaitSet, waitables: openArray[Waitable]): WaitableIdxPair
     csize_t c.services,
     csize_t 0)
   discard addToRclWaitSet(self.handle.getRclWaitSet(), self.interruptCondWaitable)
-  for waitable in waitables:
+  result = newSeq[(Waitable, int)](waitables.len)
+  for i, waitable in waitables:
     let idx = addToRclWaitSet(self.handle.getRclWaitSet(), waitable)
-    result.add (waitable, idx)
+    result[i] = (waitable, idx)
 
 template ptrAsArray[T](p: ptr T): ptr UncheckedArray[T] =
   cast[ptr UncheckedArray[T]](p)
 
 proc getReadyWaitables(waitSet: ptr rcl_wait_set_t, waitableIdxPair: WaitableIdxPairSeq): seq[Waitable] =
-  for (waitable, idx) in waitableIdxPair:
+  result = newSeq[Waitable]()
+  for i, (waitable, idx) in waitableIdxPair:
     var isReady = false
 
     case waitable.kind
@@ -215,10 +218,11 @@ proc wait*(self: WaitSet, waitables: openArray[Waitable], timeout = none(Duratio
   case ret
   of RCL_RET_OK:
     if self.context.isShuttingDown:
-      result = WaitResult(kind: Shutdown)
+      WaitResult(kind: Shutdown)
     else:
-      result = WaitResult(kind: Ready, readyWaitables: readyWaitables)
+      WaitResult(kind: Ready, readyWaitables: readyWaitables)
   of RCL_RET_TIMEOUT:
-    result = WaitResult(kind: Timeout)
+    WaitResult(kind: Timeout)
   else:
     wrapError ret
+    unreachable()

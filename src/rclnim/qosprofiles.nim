@@ -238,7 +238,7 @@ type
 func checkCompatible*(
     publisherQoS, subscriptionQoS: QoSProfile): tuple[compatibility: QoSCompatibility, reason: string] =
   var
-    compatible: rmw_qos_compatibility_type_t
+    compatible = RMW_QOS_COMPATIBILITY_OK
     reason = newString(2048)
   let ret = rmw_qos_profile_check_compatible(
     publisherQoS.toRmw(),

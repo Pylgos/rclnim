@@ -63,3 +63,9 @@ proc destroyFields*[T](val: var T) =
   for name, field in val.fieldPairs:
     {.cast(raises: [])}:
       `=destroy`(val.accessField(name))
+
+type
+  UnreachableDefect = object of Defect
+
+proc unreachable*() {.noreturn, noinline.} =
+  raise newException(UnreachableDefect, "reached unreachable code")

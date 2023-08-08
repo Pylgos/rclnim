@@ -57,7 +57,7 @@ proc addService*[T](self; srv: Service[T], cb: sink proc(req: sink T.Request): T
       "service is already registered"
   self[].services[srv.waitable] =
     proc() {.isolatedClosure.} =
-      var req: T.Request
+      var req = default(T.Request)
       let sender = srv.takeRequest(req)
       if sender.isSome():
         let resp = cb(req)
