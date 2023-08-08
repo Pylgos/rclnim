@@ -180,6 +180,7 @@ type QoSProfile* = object
 func toRmw*(self: QoSProfile): rmw_qos_profile_t =
   result.history = self.history.toRmw()
   result.reliability = self.reliability.toRmw()
+  result.durability = self.durability.toRmw()
   result.liveliness = self.liveliness.toRmw()
   result.depth = self.depth.csize_t
   result.deadline = self.deadline.toRmw()
