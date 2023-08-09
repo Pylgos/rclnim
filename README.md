@@ -41,7 +41,7 @@ except ShutdownError:
 
 ## Dependencies
 
-* Nim >=1.9.5
+* Nim >= 2.0
 * ROS2 Humble
 * Linux (Tested on Ubuntu 22.04)
 ## Documentation

@@ -10,9 +10,9 @@ namedBin      = {"rclnim/private/importinterfacehelper": "_rclnim_import_interfa
 
 # Dependencies
 
-requires "nim >= 1.9.5"
+requires "nim >= 2.0"
 requires "tinyre"
-requires "https://github.com/Pylgos/nim-concurrent.git"
+requires "https://github.com/Pylgos/nim-concurrent.git#head"
 requires "chronos#head"
 
 import std/[os, strformat, strutils]
