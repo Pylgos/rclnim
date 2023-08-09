@@ -1,5 +1,7 @@
 import rclnim
-import std/[asyncdispatch, monotimes, stats]
+import std/[monotimes, stats]
+import rclnim/chronossupport
+import chronos
 importInterface std_msgs/msg/int64
 
 import ./helper
@@ -18,9 +20,9 @@ var statistics: RunningStat
 proc pubMain() {.async.} =
   for i in 0..<sampleCount:
     let now = getMonoTime()
-    let msg = Int64.init(data = now.ticks)
+    let msg = Int64(data: now.ticks)
     pub.publish(msg)
-    await sleepAsync 1
+    await sleepAsync chronos.milliseconds(1)
 
 proc subMain() {.async.} =
   for i in 0..<sampleCount:
@@ -30,7 +32,7 @@ proc subMain() {.async.} =
     statistics.push(nowNs - pubNs)
 
 proc main() {.async.} =
-  await all [pubMain(), subMain()]
+  await allFutures [pubMain(), subMain()]
 
 waitFor main()
 
