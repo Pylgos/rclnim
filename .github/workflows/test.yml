@@ -8,6 +8,10 @@ on:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        nim-version: [devel, '2.0']
+
     runs-on: ubuntu-latest
 
     container:
@@ -20,7 +24,7 @@ jobs:
         wget -O /tmp/choosenim-init.sh https://nim-lang.org/choosenim/init.sh
         sh /tmp/choosenim-init.sh -y
         echo ~/.nimble/bin >> $GITHUB_PATH
-        ~/.nimble/bin/choosenim devel
+        ~/.nimble/bin/choosenim ${{ matrix.nim-version }}
 
     - uses: actions/checkout@v3
       with:
