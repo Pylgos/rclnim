@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        nim-version: [devel, '2.0']
+        nim-version: [devel, '2.0.0']
 
     runs-on: ubuntu-latest
 
