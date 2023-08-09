@@ -14,7 +14,7 @@ proc collectAllRosPackages(): RosPackageTable =
   result = initTable[string, RosPackage]()
   let prefixes = getEnv("AMENT_PREFIX_PATH").split(':')
   for prefix in prefixes:
-    let resourceDir = prefix/"share/ament_index/resource_index/packages"
+    let resourceDir = prefix & "/share/ament_index/resource_index/packages"
     if dirExists(resourceDir):
       for pc in resourceDir.walkDir():
         let packageName = pc.path.splitFile().name
@@ -51,7 +51,7 @@ proc findRosPackageOpt*(name: string): Option[RosPackage] =
 
 proc getDeps*(p: RosPackage): HashSet[RosPackage] =
   result = initHashSet[RosPackage]()
-  let xmlPath = p.prefix/"share"/p.name/"package.xml"
+  let xmlPath = p.prefix & "/share/" & p.name & "/package.xml"
   if fileExists(xmlPath):
     let x = parseXml(readFile(xmlPath))
     for c in x.items:
@@ -76,10 +76,10 @@ proc getRecursiveDeps*(p: RosPackage): seq[RosPackage] =
   deps.toSeq()
 
 proc includeDir*(p: RosPackage): string =
-  p.prefix/"include"/p.name
+  p.prefix & "/include/" & p.name
 
 proc libDir*(p: RosPackage): string =
-  p.prefix/"lib"
+  p.prefix & "/lib"
 
 proc newPragma(pragma, arg: string): NimNode =
   nnkPragma.newTree(
@@ -102,7 +102,7 @@ macro configure*(p: static RosPackage, libName: static string = ""): untyped =
       result.add newPragma("passL", libDirFlag)
   
   let libName = if libName == "": p.name else: libName
-  if fileExists(p.libDir/"lib" & libName & ".so"):
+  if fileExists(p.libDir & "/lib" & libName & ".so"):
     let linkFlag = "-l" & libName
     result.add newPragma("passL", linkFlag)
 
