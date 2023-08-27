@@ -360,3 +360,15 @@ proc set*[T](self; name: string, value: sink T, checkOnly = false, notifySelf = 
 proc get*(self; name: string): ParamValue =
   withLock self[].paramsLock:
     result = self[].getParam(name)
+
+proc getAll*(self): Table[string, ParamInfo] =
+  withLock self[].paramsLock:
+    result = self[].params
+
+proc names*(self): seq[string] =
+  withLock self[].paramsLock:
+    result = self[].params.keys.toSeq()
+
+proc contains*(self; name: string): bool =
+  withLock self[].paramsLock:
+    result = self[].params.contains(name)
