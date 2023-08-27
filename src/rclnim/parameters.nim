@@ -3,7 +3,7 @@ import "."/[
   singlethreadexecutors, qosprofiles, guardconditions, waitsets,
   parametertypes, utils, handles, rcl, errors]
 import concurrent/[smartptrs, isolatedclosures]
-import std/[strformat, tables, locks, strutils]
+import std/[strformat, tables, locks, strutils, sequtils, algorithm]
 import tinyre
 
 export parametertypes
@@ -175,7 +175,7 @@ proc task(self: ptr ParamServerObj) =
     withLock self.paramsLock:
       result.result.names = newSeq[string]()
       result.result.prefixes = newSeq[string]()
-      for (name, info) in self.params.pairs:
+      for name in self.params.keys.toSeq.sorted():
         let getAll =
           request.prefixes.len == 0 and
           request.depth == ListParametersRequest.DEPTH_RECURSIVE or (name.count(sep).uint64 < request.depth)
@@ -316,7 +316,7 @@ proc endDeclaration*(self) =
   self[].setAtomicallySrv = node.createService(SetParametersAtomically, base & setParamsAtomicallyName, qos)
   self[].describeSrv = node.createService(DescribeParameters, base & describeParamsName, qos)
   self[].listSrv = node.createService(ListParameters, base & listParamsName, qos)
-  self[].eventsPub = node.createPublisher(ParameterEvent, base & paramEventsName, eventQoS)
+  self[].eventsPub = node.createPublisher(ParameterEvent, "/" & paramEventsName, eventQoS)
   self[].paramsDeclared = true
   self.setParamFromArgs()
   createThread(self[].thread, task, self.get())
@@ -360,3 +360,15 @@ proc set*[T](self; name: string, value: sink T, checkOnly = false, notifySelf = 
 proc get*(self; name: string): ParamValue =
   withLock self[].paramsLock:
     result = self[].getParam(name)
+
+proc getAll*(self): Table[string, ParamInfo] =
+  withLock self[].paramsLock:
+    result = self[].params
+
+proc names*(self): seq[string] =
+  withLock self[].paramsLock:
+    result = self[].params.keys.toSeq()
+
+proc contains*(self; name: string): bool =
+  withLock self[].paramsLock:
+    result = self[].params.contains(name)

@@ -130,7 +130,10 @@ proc getBindingDir(): string =
   querySetting(SingleValueSetting.nimcacheDir)/"rclnim_interface_bindings"
 
 proc getAltBindingDir(): string =
-  getTempDir()/"rclnim_interface_bindings"
+  when defined(linux):
+    "/var/tmp/rclnim_interface_bindings"
+  else:
+    getTempDir()/"rclnim_interface_bindings"
 
 const helperExePath =
   if fileExists currentSourcePath()/"../../_rclnim_import_interface_helper":
