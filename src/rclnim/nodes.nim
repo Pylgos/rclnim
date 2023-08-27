@@ -1,4 +1,4 @@
-import "."/[rcl, handles, contexts, init, errors, loggers, utils]
+import "."/[rcl, handles, contexts, init, errors, loggers, clocks, utils]
 import concurrent/[smartptrs]
 import system/ansi_c
 import std/locks
@@ -8,6 +8,7 @@ type
   NodeObj = object
     context: Context
     handle: NodeHandle
+    clock: Clock
     name, namespace, fullyQualifiedName, loggerName: string
 
   Node* = SharedPtr[NodeObj]
@@ -18,6 +19,7 @@ proc newNode*(name: string, namespace = "", context = getGlobalContext()): Node 
   result = newSharedPtr(NodeObj)
   result[].context = context
   result[].handle = newNodeHandle(context.handle, name, namespace)
+  result[].clock = newClock()
   withLock getRclGlobalLock():
     result[].name = $rcl_node_get_name(result.handle.getRclNode())
     result[].namespace = $rcl_node_get_namespace(result.handle.getRclNode())
@@ -29,6 +31,9 @@ proc handle*(self: Node): NodeHandle =
 
 proc context*(self: Node): Context =
   self[].context
+
+proc clock*(self: Node): Clock =
+  self[].clock
 
 proc name*(self: Node): string =
   self[].name
