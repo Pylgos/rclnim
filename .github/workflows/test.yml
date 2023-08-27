@@ -1,6 +1,9 @@
 name: Test
 on:
   push:
+    branches:
+    - main
+    - devel
   pull_request:
   workflow_dispatch:
 
@@ -9,6 +12,7 @@ jobs:
     strategy:
       matrix:
         nim-version: [devel, '2.0.0']
+        backend: [c, cpp]
 
     runs-on: ubuntu-latest
 

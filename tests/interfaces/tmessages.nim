@@ -1,3 +1,7 @@
+discard """
+  targets: "c cpp"
+"""
+
 import rclnim
 
 importInterface std_msgs/msg/[
