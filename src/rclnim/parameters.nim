@@ -3,7 +3,7 @@ import "."/[
   singlethreadexecutors, qosprofiles, guardconditions, waitsets,
   parametertypes, utils, handles, rcl, errors]
 import concurrent/[smartptrs, isolatedclosures]
-import std/[strformat, tables, locks, strutils]
+import std/[strformat, tables, locks, strutils, sequtils, algorithm]
 import tinyre
 
 export parametertypes
@@ -175,7 +175,7 @@ proc task(self: ptr ParamServerObj) =
     withLock self.paramsLock:
       result.result.names = newSeq[string]()
       result.result.prefixes = newSeq[string]()
-      for (name, info) in self.params.pairs:
+      for name in self.params.keys.toSeq.sorted():
         let getAll =
           request.prefixes.len == 0 and
           request.depth == ListParametersRequest.DEPTH_RECURSIVE or (name.count(sep).uint64 < request.depth)
