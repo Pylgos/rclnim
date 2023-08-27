@@ -8,6 +8,7 @@ import ./rclnim/[
   qosprofiles,
   rosinterfaceimporters,
   rostimes,
+  clocks,
   services,
   subscriptions,
   parameters
@@ -23,6 +24,7 @@ export
   qosprofiles,
   rosinterfaceimporters,
   rostimes,
+  clocks,
   services,
   subscriptions,
   parameters
