@@ -1,3 +1,7 @@
+discard """
+  targets: "c cpp"
+"""
+
 import rclnim
 import rclnim/chronossupport
 import chronos

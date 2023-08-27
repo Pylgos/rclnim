@@ -1,3 +1,7 @@
+discard """
+  targets: "c cpp"
+"""
+
 import rclnim
 import std/[os, times]
 

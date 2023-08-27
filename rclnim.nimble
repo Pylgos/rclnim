@@ -29,6 +29,12 @@ task bench, "run behchmarks":
 task test, "test":
   exec "ROS_LOCALHOST_ONLY=1 testament --megatest:off all"
 
+task testC, "test c backend":
+  exec "ROS_LOCALHOST_ONLY=1 testament --megatest:off --targets:\"c\" all"
+
+task testCpp, "test cpp backend":
+  exec "ROS_LOCALHOST_ONLY=1 testament --megatest:off --targets:\"cpp\" all"
+
 task generateBindings, "generate rcl binding with futhark":
   cd "binding_generator"
   exec "nimble --verbose c --compileOnly -d:futharkRebuild -d:nodeclguards gen"

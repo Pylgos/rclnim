@@ -1,5 +1,6 @@
 discard """
-  timeout: 10
+  targets: "c cpp"
+  timeout: 30
   exitcode: 1
 """
 
