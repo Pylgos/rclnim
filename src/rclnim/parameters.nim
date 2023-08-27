@@ -316,7 +316,7 @@ proc endDeclaration*(self) =
   self[].setAtomicallySrv = node.createService(SetParametersAtomically, base & setParamsAtomicallyName, qos)
   self[].describeSrv = node.createService(DescribeParameters, base & describeParamsName, qos)
   self[].listSrv = node.createService(ListParameters, base & listParamsName, qos)
-  self[].eventsPub = node.createPublisher(ParameterEvent, base & paramEventsName, eventQoS)
+  self[].eventsPub = node.createPublisher(ParameterEvent, "/" & paramEventsName, eventQoS)
   self[].paramsDeclared = true
   self.setParamFromArgs()
   createThread(self[].thread, task, self.get())
