@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.4.3"
+version       = "0.5.0"
 author        = "Pylgos"
 description   = "Nim bindings for ROS2"
 license       = "MIT"
