@@ -1,5 +1,4 @@
-import rclnim
-import rclnim/chronossupport
+import ./[parameters, nodes, contexts, chronossupport]
 import chronos
 import std/[macros, genasts, tables]
 
@@ -117,19 +116,3 @@ proc createObjParamServer*[T](node: Node, default: T): ObjParamServer[T] =
   result = ObjParamServer[T](data: SharedData[T](server: server, eventQueue: newAsyncEventQueue[ParamEvent](), value: default))
   result.syncParams()
   result.loop = updateParamLoop(result.data)
-
-
-when isMainModule:
-  type
-    TestB = object
-      fieldD: string
-
-    Test = object
-      fieldA: int
-      fieldB: float
-      fieldC: TestB
-
-  rclnim.init()
-  let node = Node.new("test_node")
-  let p = createObjParamServer(node, Test())
-  p.set(fieldB, 14)
