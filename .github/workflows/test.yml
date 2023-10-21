@@ -34,5 +34,5 @@ jobs:
 
     - run: git config --global --add safe.directory /__w/rclnim/rclnim
     - run: nimble install -y --verbose
-    - run: source /opt/ros/humble/setup.bash && nimble test
+    - run: source /opt/ros/humble/setup.bash && nimble test${{ matrix.backend }}
       shell: bash
