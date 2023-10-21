@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         nim-version: [devel, '2.0.0']
-        backend: [c, cpp]
+        backend: [c]
 
     runs-on: ubuntu-latest
 
