@@ -3,6 +3,7 @@ import futhark
 import cpkgfinder
 
 const rclPkg = findCPackage("rcl")
+const rclActinoPkg = findCPackage("rcl_action")
 
 const rclIncludeDir = block:
   var res = ""
@@ -38,6 +39,16 @@ const rcutilsIncludeDir = block:
   doAssert res != ""
   res
 
+const rclActionIncludeDir = block:
+  var res = ""
+  echo rclActinoPkg
+  for arg in rclActinoPkg.compilerArgs:
+    if arg.startsWith("-I") and arg.endsWith("include/rcl_action"):
+      res = arg
+      res.removePrefix("-I")
+  doAssert res != ""
+  res
+
 macro myImportC(compilerArgs: static openArray[string], args: untyped): untyped =
   for carg in compilerArgs.join(" ").replace("-isystem ", "-I").splitWhitespace():
     args.add nnkCall.newTree(
@@ -53,12 +64,13 @@ proc myRenameCallback(name: string, kind: string, partof = ""): string =
     if name in ["pointer"]:
       result = name & "_" & kind
 
-myImportC(rclPkg.compilerArgs):
+myImportC(rclPkg.compilerArgs & rclActinoPkg.compilerArgs):
   outputPath getProjectPath()/../"src/rclnim/distro/humble.nim"
   path rclIncludeDir
   path rclYamlParamParserIncludeDir
   path rmwIncludeDir
   path rcutilsIncludeDir
+  path rclActionIncludeDir
   renameCallback myRenameCallback
   keepCase()
   "rcl/init.h"
@@ -69,3 +81,4 @@ myImportC(rclPkg.compilerArgs):
   "rcl/logging.h"
   "rcl_yaml_param_parser/parser.h"
   "rmw/error_handling.h"
+  "rcl_action/rcl_action.h"

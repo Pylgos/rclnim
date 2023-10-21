@@ -226,12 +226,44 @@ proc processSrv(idl: RosInterfaceDef, outDir, libPath: string) =
   s.addLine fmt"type {typeName}*{genPragma(idl)} = object"
   s.addLine
   s.addLine fmt"template Request*(_: typedesc[{qualifiedTypeName}]): untyped ="
-  s.addLine fmt"  {qualifiedTypeName}_Request"
+  s.addLine fmt"  {qualifiedTypeName}Request"
   s.addLine
   s.addLine fmt"template Response*(_: typedesc[{qualifiedTypeName}]): untyped ="
-  s.addLine fmt"  {qualifiedTypeName}_Response"
+  s.addLine fmt"  {qualifiedTypeName}Response"
   s.addLine
   s.addLine genTypeTraitTemplate(qualifiedTypeName, "isRosServiceType", true)
+  createDir(path.parentDir)
+  writeFile(path, s)
+
+proc processAction(idl: RosInterfaceDef, outDir, libPath: string) =
+  let
+    moduleName = idl.typeName.camelCaseToSnakeCase
+    path = outDir/idl.pkgName/"action"/moduleName & ".nim"
+    goalName = idl.typeName & "Goal"
+    resultName = idl.typeName & "Result"
+    feedbackName = idl.typeName & "Feedback"
+    typeName = idl.typeName
+    qualifiedTypeName = fmt"{typeName.camelCaseToSnakeCase}.{typeName}"
+
+  var s = ""
+  s.addLine genImports(idl, outDir, libPath)
+
+  s.add genObj(idl.goal, moduleName, goalName, true)
+  s.add genObj(idl.result, moduleName, resultName, true)
+  s.add genObj(idl.feedback, moduleName, feedbackName, true)
+  
+  s.addLine fmt"type {typeName}*{genPragma(idl)} = object"
+  s.addLine
+  s.addLine fmt"template Goal*(_: typedesc[{qualifiedTypeName}]): untyped ="
+  s.addLine fmt"  {qualifiedTypeName}Goal"
+  s.addLine
+  s.addLine fmt"template Result*(_: typedesc[{qualifiedTypeName}]): untyped ="
+  s.addLine fmt"  {qualifiedTypeName}Result"
+  s.addLine
+  s.addLine fmt"template Feedback*(_: typedesc[{qualifiedTypeName}]): untyped ="
+  s.addLine fmt"  {qualifiedTypeName}Feedback"
+  s.addLine
+  s.addLine genTypeTraitTemplate(qualifiedTypeName, "isRosActionType", true)
   createDir(path.parentDir)
   writeFile(path, s)
 
@@ -242,7 +274,7 @@ proc processType(idl: RosInterfaceDef, outDir, libPath: string) =
   of rikService:
     processSrv(idl, outDir, libPath)
   of rikAction:
-    discard
+    processAction(idl, outDir, libPath)
 
 proc processPkg(p: Package, outDir, libPath: string): HashSet[string] =
   let resourcePath = p.prefix/"share/ament_index/resource_index/rosidl_interfaces"/p.name

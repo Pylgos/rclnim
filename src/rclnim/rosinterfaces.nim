@@ -9,9 +9,6 @@ template isRosServiceType*(T: typedesc): bool =
   false
 
 type
-  # MessageTypeSupport* = distinct pointer
-  # ServiceTypeSupport* = distinct pointer
-
   SomeMessage* = concept type T
     T.isRosMessageType
 
