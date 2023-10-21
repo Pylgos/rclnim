@@ -11,7 +11,8 @@ import ./rclnim/[
   clocks,
   services,
   subscriptions,
-  parameters
+  parameters,
+  objparamservers,
 ]
 
 export
@@ -27,7 +28,8 @@ export
   clocks,
   services,
   subscriptions,
-  parameters
+  parameters,
+  objparamservers
 
 when defined(nimdoc):
   import ./rclnim/[
