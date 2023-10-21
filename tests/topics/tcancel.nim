@@ -21,11 +21,18 @@ proc pubMain() {.async.} =
     echo "published: ", msg
     await sleepAsync 10.milliseconds
 
+proc withTimeoutCancel[T](fut: Future[T], timeout: Duration): Future[bool] {.async.} =
+  if await withTimeout(fut, timeout):
+    return true
+  else:
+    await fut.cancelAndWait()
+    return fut.completed()
+
 proc subMain() {.async.} =
   var i = 0
   while true:
     let msgFut = sub.recv()
-    if await withTimeout(msgFut, 2.milliseconds):
+    if await withTimeoutCancel(msgFut, 2.milliseconds):
       let msg = msgFut.read()
       echo "received: ", msg
       doAssert msg.sec == i
@@ -33,8 +40,7 @@ proc subMain() {.async.} =
         return
       inc i
     else:
-      echo "timeout!"
-      msgFut.cancel()
+      echo "timeout"
 
 proc main() {.async.} =
   await allFutures [pubMain(), subMain()]
