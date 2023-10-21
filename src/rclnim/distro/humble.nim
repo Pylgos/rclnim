@@ -693,7 +693,7 @@ type
   rmw_error_string_t* = rcutils_error_string_t ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/error_handling.h:34:32
   rmw_error_state_t* = rcutils_error_state_t ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/error_handling.h:37:31
   compiler_int_least64_t* = compiler_int64_t ## Generated based on /usr/include/bits/types.h:58:19
-  compiler_gnuc_va_list* = compiler_builtin_va_list ## Generated based on /usr/lib/clang/15.0.7/include/stdarg.h:32:27
+  compiler_gnuc_va_list* = compiler_builtin_va_list ## Generated based on /usr/lib/clang/16/include/stdarg.h:14:27
   struct_rosidl_message_type_support_t* {.pure, inheritable, bycopy.} = object
     typesupport_identifier*: cstring ## Generated based on /nix/store/l5n428nlcyhhwzxy3s7albghm1xhss0j-rosidl_runtime_c-3.1.4/include/rosidl_runtime_c/rosidl_runtime_c/message_type_support_struct.h:32:8
     data*: pointer
@@ -800,7 +800,7 @@ else:
     let RCUTILS_PUBLIC* = RCUTILS_IMPORT ## Generated based on /nix/store/7d317fh17jfd2pymkvpyxdl9x8sdlcns-rcutils-5.1.2/include/rcutils/rcutils/visibility_control.h:23:10
 proc rcutils_get_default_allocator*(): rcutils_allocator_t {.cdecl,
     importc: "rcutils_get_default_allocator".}
-proc rcutils_reallocf*(pointer: pointer; size: csize_t;
+proc rcutils_reallocf*(pointer_arg: pointer; size: csize_t;
                        allocator: ptr rcutils_allocator_t): pointer {.cdecl,
     importc: "rcutils_reallocf".}
 when SIZE_MAX is typedesc:

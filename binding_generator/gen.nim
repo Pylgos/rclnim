@@ -47,12 +47,19 @@ macro myImportC(compilerArgs: static openArray[string], args: untyped): untyped 
   quote do:
     importc(`args`)
 
+proc myRenameCallback(name: string, kind: string, partof = ""): string =
+  result = name
+  if kind == "arg":
+    if name in ["pointer"]:
+      result = name & "_" & kind
+
 myImportC(rclPkg.compilerArgs):
   outputPath getProjectPath()/../"src/rclnim/distro/humble.nim"
   path rclIncludeDir
   path rclYamlParamParserIncludeDir
   path rmwIncludeDir
   path rcutilsIncludeDir
+  renameCallback myRenameCallback
   keepCase()
   "rcl/init.h"
   "rcl/node.h"
