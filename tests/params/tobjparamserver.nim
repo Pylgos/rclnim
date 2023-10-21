@@ -20,7 +20,7 @@ block:
       a_string: string
       some_lists: SomeLists
       default_str = "hello"
-      default_int: int
+      default_int: int64
 
   let node = newNode("param_test_objparamserver")
   let params = node.createObjParamServer(Parameter(default_int: 99))
