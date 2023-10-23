@@ -89,6 +89,23 @@ proc toWaitable*(s: ClientHandle): Waitable =
   result = newSharedPtr(WaitableObj)
   result[] = WaitableObj(kind: WaitableKind.Client, client: s)
 
+proc toWaitables*(h: ActionClientHandle): tuple[feedback, status, goalResponse, cancelResponse, resultResponse: Waitable] =
+  (
+    newSharedPtr(WaitableObj(kind: WaitableKind.Feedback, actionClient: h)),
+    newSharedPtr(WaitableObj(kind: WaitableKind.Status, actionClient: h)),
+    newSharedPtr(WaitableObj(kind: WaitableKind.GoalResponse, actionClient: h)),
+    newSharedPtr(WaitableObj(kind: WaitableKind.CancelResponse, actionClient: h)),
+    newSharedPtr(WaitableObj(kind: WaitableKind.ResultResponse, actionClient: h)),
+  )
+
+proc toWaitables*(h: ActionServerHandle): tuple[goalRequest, cancelRequest, resultRequest, goalExpored: Waitable] =
+  (
+    newSharedPtr(WaitableObj(kind: WaitableKind.GoalRequest, actionServer: h)),
+    newSharedPtr(WaitableObj(kind: WaitableKind.CancelRequest, actionServer: h)),
+    newSharedPtr(WaitableObj(kind: WaitableKind.ResultRequest, actionServer: h)),
+    newSharedPtr(WaitableObj(kind: WaitableKind.GoalExpired, actionServer: h)),
+  )
+
 proc count*(waitables: openArray[Waitable]): tuple[guardConditions, subscriptions, services, clients, timers: Natural] =
   result = (0, 0, 0, 0, 0)
   for waitable in waitables:
@@ -289,12 +306,21 @@ proc lockWaitables(waitables: openArray[Waitable]) =
     raise newException(AlreadyWaitingDefect):
       fmt"The {failedPos}'th waitable is already waiting by another thread."
   
+  var
+    lockedActionClients = initHashSet[ActionClientHandle]()
+    lockedActionServers = initHashSet[ActionServerHandle]()
   for i, waitable in waitables:
     case waitable.kind
     of WaitableKind.Client:
       waitable.client.getLock().acquire()
     of WaitableKind.Service:
       waitable.service.getLock().acquire()
+    of actionClientKinds:
+      if lockedActionClients.containsOrIncl(waitable.actionClient):
+        waitable.actionClient.getLock().acquire()
+    of actionServerKinds:
+      if lockedActionServers.containsOrIncl(waitable.actionServer):
+        waitable.actionServer.getLock().acquire()
     else:
       discard
 
@@ -302,12 +328,21 @@ proc unlockWaitables(waitables: openArray[Waitable]) =
   for waitable in waitables:
     waitable.waiting.store(false, Release)
   
+  var
+    unlockedActionClients = initHashSet[ActionClientHandle]()
+    unlockedActionServers = initHashSet[ActionServerHandle]()
   for i, waitable in waitables:
     case waitable.kind
     of WaitableKind.Client:
       waitable.client.getLock().release()
     of WaitableKind.Service:
       waitable.service.getLock().release()
+    of actionClientKinds:
+      if unlockedActionClients.containsOrIncl(waitable.actionClient):
+        waitable.actionClient.getLock().acquire()
+    of actionServerKinds:
+      if unlockedActionServers.containsOrIncl(waitable.actionServer):
+        waitable.actionServer.getLock().acquire()
     else:
       discard
 
