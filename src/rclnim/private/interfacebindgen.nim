@@ -113,25 +113,25 @@ proc toNimType(t: Type): string =
   of tkFixedArray: fmt"system.array[{t.length}, {t.elemType[].toNimType}]"
   of tkBoundedArray, tkUnboundedArray: fmt"system.seq[{t.elemType[].toNimType}]"
 
-proc toCType(t: Type): string =
-  case t.kind
-  of tkBool: "system.bool"
-  of tkByte: "system.byte"
-  of tkChar: "system.uint8"
-  of tkF32: "system.float32"
-  of tkF64: "system.float64"
-  of tkU8: "system.uint8"
-  of tkU16: "system.uint16"
-  of tkU32: "system.uint32"
-  of tkU64: "system.uint64"
-  of tkI8: "system.int8"
-  of tkI16: "system.int16"
-  of tkI32: "system.int32"
-  of tkI64: "system.int64"
-  of tkStr: fmt"module_rclnim_rosinterfaces.CMessageSequence[char]"
-  of tkObject: fmt"{mangledTypeName(t.packageName, t.typeName)}.CType"
-  of tkFixedArray: fmt"system.array[{t.length}, {t.elemType[].toCType}]"
-  of tkBoundedArray, tkUnboundedArray: fmt"module_rclnim_rosinterfaces.CMessageSequence[{t.elemType[].toCType}]"
+# proc toCType(t: Type): string =
+#   case t.kind
+#   of tkBool: "system.bool"
+#   of tkByte: "system.byte"
+#   of tkChar: "system.uint8"
+#   of tkF32: "system.float32"
+#   of tkF64: "system.float64"
+#   of tkU8: "system.uint8"
+#   of tkU16: "system.uint16"
+#   of tkU32: "system.uint32"
+#   of tkU64: "system.uint64"
+#   of tkI8: "system.int8"
+#   of tkI16: "system.int16"
+#   of tkI32: "system.int32"
+#   of tkI64: "system.int64"
+#   of tkStr: fmt"module_rclnim_rosinterfaces.CMessageSequence[char]"
+#   of tkObject: fmt"{mangledTypeName(t.packageName, t.typeName)}.CType"
+#   of tkFixedArray: fmt"system.array[{t.length}, {t.elemType[].toCType}]"
+#   of tkBoundedArray, tkUnboundedArray: fmt"module_rclnim_rosinterfaces.CMessageSequence[{t.elemType[].toCType}]"
 
 proc toNimLiteral(v: Literal, t: Type): string =
   case v.kind
@@ -163,7 +163,11 @@ proc genImports(idl: RosInterfaceDef, outDir, libPath: string): string =
       path = outDir/dep.pkgName/"msg"/dep.typeName.camelCaseToSnakeCase & ".nim"
       mangledName = mangledModuleName(dep.pkgName, dep.typeName)
     result.addLine fmt"import {relativePath(path, dir).escape()} as {mangledName}"
-  result.addLine fmt"import {libPath.escape} as module_rclnim_rosinterfaces"
+  let
+    # interfaceModulePath = libPath/"rosinterfaces.nim"
+    pragmaModulePath = libPath/"private/interfacepragmas.nim"
+  # result.addLine fmt"import {escape(interfaceModulePath)} as module_rclnim_rosinterfaces"
+  result.addLine fmt"import {escape(pragmaModulePath)} as module_interface_pragmas"
   result.addLine "from ../detail/typesupport import nil"
 
 proc genDetail(outDir: string, pkg: Package) =
@@ -177,11 +181,14 @@ proc genDoc(doc: string): string =
     result.addLine fmt"  ## {line}"
   result.removeSuffix('\n')
 
-proc genObj(msg: RosMsgDef, moduleName, typeName: string, doExport: bool): string =
+proc genPragma(idl: RosInterfaceDef): string =
+  result.add "{.packageNamePragma(" & idl.pkgName.escape & "), typeNamePragma(" & idl.typeName.escape & ").}"
+
+proc genObj(msg: RosMsgDef, moduleName, typeName: string, doExport: bool, objPragma = ""): string =
   if doExport:
-    result.addLine fmt"type {typeName}* = object"
+    result.addLine fmt"type {typeName}*{objPragma} = object"
   else:
-    result.addLine fmt"type {typeName} = object"
+    result.addLine fmt"type {typeName}{objPragma} = object"
   result.addLine genDoc(msg.doc)
   for f in msg.fields:
     result.add fmt"  {f.name.sanitizedFieldName}*: {f.typ.toNimType}{f.toFieldDefaultValueAsgn}"
@@ -201,14 +208,14 @@ proc genObj(msg: RosMsgDef, moduleName, typeName: string, doExport: bool): strin
 
   result.addLine
 
-  result.addLine fmt"type {typeName}_CType = object"
-  for f in msg.fields:
-    result.addLine fmt"  {f.name.sanitizedFieldName}*: {f.typ.toCType}"
+  # result.addLine fmt"type {typeName}_CType = object"
+  # for f in msg.fields:
+  #   result.addLine fmt"  {f.name.sanitizedFieldName}*: {f.typ.toCType}"
 
-  result.addLine
+  # result.addLine
 
-  result.addLine fmt"template CType*(_: typedesc[{qualifiedTypeName}]): untyped ="
-  result.addLine fmt"  {moduleName}.{typeName}_CType"
+  # result.addLine fmt"template CType*(_: typedesc[{qualifiedTypeName}]): untyped ="
+  # result.addLine fmt"  {moduleName}.{typeName}_CType"
 
   result.addLine
 
@@ -216,16 +223,16 @@ proc genTypeTraitTemplate(typeName: string, funcName: string, value: bool): stri
   result.addLine fmt"template {funcName}*(_: typedesc[{typeName}]): bool ="
   result.addLine fmt"  {value}"
 
-proc genGetCTypeSupport(idl: RosInterfaceDef, typ: string): string =
-  let (funcName, subDir, typeSupportType) =
-    case idl.kind
-    of rikMessage: ("get_message_type_support_handle", "msg", "MessageTypeSupport")
-    of rikService: ("get_service_type_support_handle", "srv", "ServiceTypeSupport")
-    else:
-      doAssert false
-      ("", "", "")
-  let typeSupportPragma = "{." & &"importc: \"rosidl_typesupport_c__{funcName}__{idl.pkgName}__{subDir}__{idl.typeName}\", cdecl" & ".}"
-  result.addLine fmt"proc getCTypeSupport*(_: typedesc[{typ}]): module_rclnim_rosinterfaces.{typeSupportType} {typeSupportPragma}"
+# proc genGetCTypeSupport(idl: RosInterfaceDef, typ: string): string =
+#   let (funcName, subDir, typeSupportType) =
+#     case idl.kind
+#     of rikMessage: ("get_message_type_support_handle", "msg", "MessageTypeSupport")
+#     of rikService: ("get_service_type_support_handle", "srv", "ServiceTypeSupport")
+#     else:
+#       doAssert false
+#       ("", "", "")
+#   let typeSupportPragma = "{." & &"importc: \"rosidl_typesupport_c__{funcName}__{idl.pkgName}__{subDir}__{idl.typeName}\", cdecl" & ".}"
+#   result.addLine fmt"proc getCTypeSupport*(_: typedesc[{typ}]): module_rclnim_rosinterfaces.{typeSupportType} {typeSupportPragma}"
 
 proc processMsg(idl: RosInterfaceDef, outDir, libPath: string) =
   let
@@ -237,8 +244,7 @@ proc processMsg(idl: RosInterfaceDef, outDir, libPath: string) =
   
   s.addLine genImports(idl, outDir, libPath)
   
-  s.addLine genObj(idl.message, moduleName, idl.typeName, true)
-  s.addLine genGetCTypeSupport(idl, qualifiedTypeName)
+  s.addLine genObj(idl.message, moduleName, idl.typeName, true, genPragma(idl))
   s.addLine genTypeTraitTemplate(qualifiedTypeName, "isRosMessageType", true)
   
   createDir(path.parentDir)
@@ -259,7 +265,7 @@ proc processSrv(idl: RosInterfaceDef, outDir, libPath: string) =
   s.add genObj(idl.request, moduleName, requestName, true)
   s.add genObj(idl.response, moduleName, responseName, true)
   
-  s.addLine fmt"type {typeName}* = object"
+  s.addLine fmt"type {typeName}*{genPragma(idl)} = object"
   s.addLine
   s.addLine fmt"template Request*(_: typedesc[{qualifiedTypeName}]): untyped ="
   s.addLine fmt"  {qualifiedTypeName}_Request"
@@ -267,7 +273,6 @@ proc processSrv(idl: RosInterfaceDef, outDir, libPath: string) =
   s.addLine fmt"template Response*(_: typedesc[{qualifiedTypeName}]): untyped ="
   s.addLine fmt"  {qualifiedTypeName}_Response"
   s.addLine
-  s.addLine genGetCTypeSupport(idl, qualifiedTypeName)
   s.addLine genTypeTraitTemplate(qualifiedTypeName, "isRosServiceType", true)
   createDir(path.parentDir)
   writeFile(path, s)
