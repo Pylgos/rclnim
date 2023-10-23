@@ -79,7 +79,7 @@ proc server*[T](self: ObjParamServer[T]): ParamServer =
   self.data.server
 
 proc eventQueue*[T](self: ObjParamServer[T]): AsyncEventQueue[ParamEvent] =
-  self.eventQueue
+  self.data.eventQueue
 
 macro set*[T](self: ObjParamServer[T], fld: untyped, value: untyped): untyped =
   result = newStmtList()
