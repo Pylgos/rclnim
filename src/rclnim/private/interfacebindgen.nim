@@ -113,26 +113,6 @@ proc toNimType(t: Type): string =
   of tkFixedArray: fmt"system.array[{t.length}, {t.elemType[].toNimType}]"
   of tkBoundedArray, tkUnboundedArray: fmt"system.seq[{t.elemType[].toNimType}]"
 
-# proc toCType(t: Type): string =
-#   case t.kind
-#   of tkBool: "system.bool"
-#   of tkByte: "system.byte"
-#   of tkChar: "system.uint8"
-#   of tkF32: "system.float32"
-#   of tkF64: "system.float64"
-#   of tkU8: "system.uint8"
-#   of tkU16: "system.uint16"
-#   of tkU32: "system.uint32"
-#   of tkU64: "system.uint64"
-#   of tkI8: "system.int8"
-#   of tkI16: "system.int16"
-#   of tkI32: "system.int32"
-#   of tkI64: "system.int64"
-#   of tkStr: fmt"module_rclnim_rosinterfaces.CMessageSequence[char]"
-#   of tkObject: fmt"{mangledTypeName(t.packageName, t.typeName)}.CType"
-#   of tkFixedArray: fmt"system.array[{t.length}, {t.elemType[].toCType}]"
-#   of tkBoundedArray, tkUnboundedArray: fmt"module_rclnim_rosinterfaces.CMessageSequence[{t.elemType[].toCType}]"
-
 proc toNimLiteral(v: Literal, t: Type): string =
   case v.kind
   of litBool:
@@ -208,31 +188,9 @@ proc genObj(msg: RosMsgDef, moduleName, typeName: string, doExport: bool, objPra
 
   result.addLine
 
-  # result.addLine fmt"type {typeName}_CType = object"
-  # for f in msg.fields:
-  #   result.addLine fmt"  {f.name.sanitizedFieldName}*: {f.typ.toCType}"
-
-  # result.addLine
-
-  # result.addLine fmt"template CType*(_: typedesc[{qualifiedTypeName}]): untyped ="
-  # result.addLine fmt"  {moduleName}.{typeName}_CType"
-
-  result.addLine
-
 proc genTypeTraitTemplate(typeName: string, funcName: string, value: bool): string =
   result.addLine fmt"template {funcName}*(_: typedesc[{typeName}]): bool ="
   result.addLine fmt"  {value}"
-
-# proc genGetCTypeSupport(idl: RosInterfaceDef, typ: string): string =
-#   let (funcName, subDir, typeSupportType) =
-#     case idl.kind
-#     of rikMessage: ("get_message_type_support_handle", "msg", "MessageTypeSupport")
-#     of rikService: ("get_service_type_support_handle", "srv", "ServiceTypeSupport")
-#     else:
-#       doAssert false
-#       ("", "", "")
-#   let typeSupportPragma = "{." & &"importc: \"rosidl_typesupport_c__{funcName}__{idl.pkgName}__{subDir}__{idl.typeName}\", cdecl" & ".}"
-#   result.addLine fmt"proc getCTypeSupport*(_: typedesc[{typ}]): module_rclnim_rosinterfaces.{typeSupportType} {typeSupportPragma}"
 
 proc processMsg(idl: RosInterfaceDef, outDir, libPath: string) =
   let
