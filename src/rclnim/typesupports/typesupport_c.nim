@@ -114,13 +114,13 @@ func genCTypeAux(T: typedesc): auto {.gcsafe, raises: [].} =
 macro CTypeHack(T: untyped): untyped =
   newCall(ctypeTemplateSyms, T)
 
-template CType(T: typedesc[bool]): typedesc = bool
-template CType(T: typedesc[SomeNumber]): typedesc = T
-template CType(T: typedesc[uint8]): typedesc = T
-template CType(T: typedesc[string]): typedesc = CMessageSequence[char]
-template CType[R, U](T: typedesc[array[R, U]]): typedesc = array[R, CTypeHack(U)]
-template CType[U](T: typedesc[seq[U]]): typedesc = CMessageSequence[CTypeHack(U)]
-template CType(T: typedesc[object]): typedesc = typeof(genCTypeAux(T))
+template CType(T: typedesc[bool]): untyped = bool
+template CType(T: typedesc[SomeNumber]): untyped = T
+template CType(T: typedesc[uint8]): untyped = T
+template CType(T: typedesc[string]): untyped = CMessageSequence[char]
+template CType[R, U](T: typedesc[array[R, U]]): untyped = array[R, CTypeHack(U)]
+template CType[U](T: typedesc[seq[U]]): untyped = CMessageSequence[CTypeHack(U)]
+template CType(T: typedesc[object]): untyped = typeof(genCTypeAux(T))
 
 static:
   ctypeTemplateSyms = bindSym"CType"
