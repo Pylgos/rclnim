@@ -185,7 +185,7 @@ proc getRclNode*(n: NodeHandle): ptr rcl_node_t =
 
 proc newSubscriptionHandle*(
     node: NodeHandle,
-    typeSupport: MessageTypeSupport,
+    typesupport: ptr rosidl_message_type_support_t,
     topicName: string,
     qos: QoSProfile): SubscriptionHandle =
   result = newSharedPtr(SubscriptionHandleObj)
@@ -197,7 +197,7 @@ proc newSubscriptionHandle*(
     opts.qos = qos.toRmw()
     try:
       wrapError rcl_subscription_init(
-        addr result.rclSubscription, node.getRclNode(), cast[ptr rosidl_message_type_support_t](typeSupport), topicName, addr opts)
+        addr result.rclSubscription, node.getRclNode(), typesupport, topicName, addr opts)
     finally:
       wrapError rcl_subscription_options_fini(addr opts)
   # result.lock.initLock()
@@ -212,7 +212,7 @@ proc getRclSubscription*(s: SubscriptionHandle): ptr rcl_subscription_t =
 
 proc newPublisherHandle*(
     node: NodeHandle,
-    typeSupport: MessageTypeSupport,
+    typesupport: ptr rosidl_message_type_support_t,
     topicName: string,
     qos: QoSProfile): PublisherHandle =
   result = newSharedPtr(PublisherHandleObj)
@@ -222,7 +222,7 @@ proc newPublisherHandle*(
     var opts = rcl_publisher_get_default_options()
     opts.qos = qos.toRmw()
     wrapError rcl_publisher_init(
-      addr result.rclPublisher, node.getRclNode(), cast[ptr rosidl_message_type_support_t](typeSupport), topicName, addr opts)
+      addr result.rclPublisher, node.getRclNode(), typesupport, topicName, addr opts)
   result.initialized = true
 
 proc getRclPublisher*(s: PublisherHandle): ptr rcl_publisher_t =
@@ -231,7 +231,7 @@ proc getRclPublisher*(s: PublisherHandle): ptr rcl_publisher_t =
 
 proc newServiceHandle*(
     node: NodeHandle,
-    typeSupport: ServiceTypeSupport,
+    typesupport: ptr rosidl_service_type_support_t,
     serviceName: string,
     qos: QoSProfile): ServiceHandle =
   result = newSharedPtr(ServiceHandleObj)
@@ -241,7 +241,7 @@ proc newServiceHandle*(
     var opts = rcl_service_get_default_options()
     opts.qos = qos.toRmw()
     wrapError rcl_service_init(
-      addr result.rclService, node.getRclNode(), cast[ptr rosidl_service_type_support_t](typeSupport), serviceName, addr opts)
+      addr result.rclService, node.getRclNode(), typesupport, serviceName, addr opts)
   result.lock = createShared(Lock)
   result.lock[].initLock()
   result.initialized = true
@@ -255,7 +255,7 @@ proc getLock*(s: ServiceHandle): var Lock =
 
 proc newClientHandle*(
     node: NodeHandle,
-    typeSupport: ServiceTypeSupport,
+    typesupport: ptr rosidl_service_type_support_t,
     serviceName: string,
     qos: QoSProfile): ClientHandle =
   result = newSharedPtr(ClientHandleObj)
@@ -265,7 +265,7 @@ proc newClientHandle*(
     var opts = rcl_client_get_default_options()
     opts.qos = qos.toRmw()
     wrapError rcl_client_init(
-      addr result.rclClient, node.getRclNode(), cast[ptr rosidl_service_type_support_t](typeSupport), serviceName, addr opts)
+      addr result.rclClient, node.getRclNode(), typesupport, serviceName, addr opts)
   result.lock = createShared(Lock)
   result.lock[].initLock()
   result.initialized = true

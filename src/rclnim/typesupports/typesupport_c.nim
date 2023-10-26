@@ -1,6 +1,7 @@
 import system/ansi_c
-import std/[strformat, genasts, macros, macrocache]
-import ../[rosinterfaces, rospkgfinder]
+import std/[strformat, genasts, macros, macrocache, typetraits]
+import ../[rosinterfaces, rospkgfinder, rcl]
+import ./types
 
 
 const
@@ -19,13 +20,11 @@ macro getCTypeSupportImpl(packageName, namespace, typeName, funcName: static str
     getCTypeSupportCFunc()
 
 
-proc getCTypeSupport(T: typedesc[SomeMessage]): MessageTypeSupport =
-  cast[MessageTypeSupport](
-    getCTypeSupportImpl(T.packageName, "msg", T.typeName, "get_message_type_support_handle"))
+proc getRosidlMessageTypesupport[T](): ptr rosidl_message_type_support_t =
+  cast[ptr rosidl_message_type_support_t](getCTypeSupportImpl(T.packageName, "msg", T.typeName, "get_message_type_support_handle"))
 
-proc getCTypeSupport(T: typedesc[SomeService]): ServiceTypeSupport =
-  cast[ServiceTypeSupport](
-    getCTypeSupportImpl(T.packageName, "srv", T.typeName, "get_service_type_support_handle"))
+proc getRosidlServiceTypesupport[T](): ptr rosidl_service_type_support_t =
+  cast[ptr rosidl_service_type_support_t](getCTypeSupportImpl(T.packageName, "srv", T.typeName, "get_service_type_support_handle"))
 
 
 type
@@ -79,13 +78,57 @@ proc `[]`*[T](s: CMessageSequence[T], idx: BackwardsIndex): var T =
 proc `[]=`*[T](s: CMessageSequence[T], idx: BackwardsIndex, e: sink T) =
   s.data[s.len - idx.int] = e
 
+var ctypeTemplateSyms{.compileTime.}: NimNode
 
+macro genCTypeImpl(val: typed): untyped =
+  let typImpl = val.getTypeImpl()
+  let recList = nnkRecList.newNimNode()
+  for f in typImpl[2]:
+    f.expectKind nnkIdentDefs
+    recList.add nnkIdentDefs.newTree(
+      ident f[0].strVal,
+      nnkCall.newTree(ctypeTemplateSyms, newCall(bindSym"typeof", f[1].copyNimTree)),
+      newEmptyNode(),
+    )
 
+  let typeIdent = ident("CType")
+  result = newStmtList(
+    nnkTypeSection.newTree(
+      nnkTypeDef.newTree(
+        typeIdent,
+        newEmptyNode(),
+        nnkObjectTy.newTree(
+          newEmptyNode(), newEmptyNode(), recList
+        )
+      ),
+    ),
+    nnkObjConstr.newTree(
+      typeIdent
+    )
+  )
+
+func genCTypeAux(T: typedesc): auto {.gcsafe, raises: [].} =
+  type Ty = T
+  genCTypeImpl(Ty())
+
+macro CTypeHack(T: untyped): untyped =
+  newCall(ctypeTemplateSyms, T)
+
+template CType(T: typedesc[bool]): typedesc = bool
+template CType(T: typedesc[SomeNumber]): typedesc = T
+template CType(T: typedesc[uint8]): typedesc = T
+template CType(T: typedesc[string]): typedesc = CMessageSequence[char]
+template CType[R, U](T: typedesc[array[R, U]]): typedesc = array[R, CTypeHack(U)]
+template CType[U](T: typedesc[seq[U]]): typedesc = CMessageSequence[CTypeHack(U)]
+template CType(T: typedesc[object]): typedesc = typeof(genCTypeAux(T))
+
+static:
+  ctypeTemplateSyms = bindSym"CType"
 
 macro accessField(obj: object, name: string): untyped =
   newDotExpr(obj, newIdentNode(name.strVal))
 
-proc nimMessageToC*[T, U](src: T, dest: var U) =
+proc nimMessageToC[T, U](src: T, dest: var U) {.gcsafe, raises: [].} =
   when T is U:
     dest = src
   
@@ -105,9 +148,9 @@ proc nimMessageToC*[T, U](src: T, dest: var U) =
       value.nimMessageToC(dest.accessField(name))
   
   else:
-    static: doAssert false
+    static: raiseAssert "cannot happen"
 
-proc cMessageToNim*[T, U](src: T, dest: var U) =
+proc cMessageToNim[T, U](src: T, dest: var U) {.gcsafe, raises: [].} =
   when T is U:
     dest = src
   
@@ -129,11 +172,45 @@ proc cMessageToNim*[T, U](src: T, dest: var U) =
     static:
       error fmt"cannot convert {$T} to {$U}"
 
+proc getVTable[T](): ptr TypesupportVTable[T] =
+  let vtable {.global.} = TypesupportVTable[T](
+    encode:
+      proc(msg: T): pointer =
+        var encoded = create(T.CType)
+        nimMessageToC(msg, encoded[])
+        encoded
+    ,
+    delete:
+      proc(encoded: pointer) =
+        {.cast(gcsafe), cast(raises: []).}:
+          `=destroy`(cast[ptr T.CType](encoded)[])
+        dealloc(encoded)
+    ,
+    create:
+      proc(): pointer =
+        create(T.CType)
+    ,
+    decode:
+      proc(encoded: pointer): T {.gcsafe.} =
+        let p = cast[ptr T.CType](encoded)
+        cMessageToNim(p[], result)
+        {.cast(gcsafe), cast(raises: []).}:
+          `=destroy`(p[])
+        dealloc(p)
+  )
+  addr vtable
 
-import ../rosinterfaceimporters
+proc getCMessageTypesupport*[T](): MessageTypesupport[T] =
+  MessageTypesupport[T](
+    name: "c",
+    rosidlTypesupport: getRosidlMessageTypesupport[T](),
+    vtable: getVTable[T](),
+  )
 
-importInterface std_msgs/msg/[int64, int32]
-importInterface std_srvs/srv/[trigger]
-echo repr Int64.getCTypeSupport()
-echo repr Int32.getCTypeSupport()
-echo repr Trigger.getCTypeSupport()
+proc getCServiceTypesupport*[T](): ServiceTypesupport[T] =
+  ServiceTypesupport[T](
+    name: "c",
+    rosidlTypesupport: getRosidlServiceTypesupport[T](),
+    requestVTable: getVTable[T.Request](),
+    responseVTable: getVTable[T.Response](),
+  )

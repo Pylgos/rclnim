@@ -1,4 +1,4 @@
-import "."/[rcl, errors, handles, waitsets, nodes, qosprofiles, typesupports, rosinterfaces, utils]
+import "."/[rcl, errors, handles, waitsets, nodes, qosprofiles, typesupports, rosinterfaces, utils, typesupports]
 import concurrent/smartptrs
 import std/[locks, options]
 
@@ -11,6 +11,7 @@ type
   ServiceBase* = SharedPtr[ServiceBaseObj]
 
   ServiceObj[T] = object of ServiceBaseObj
+    typesupport*: ServiceTypesupport[T]
 
   Service*[T] = SharedPtr[ServiceObj[T]]
 
@@ -20,7 +21,8 @@ type
 
 proc createService*[T: SomeService](node: Node, serviceName: string, qos: QoSProfile): Service[T] =
   result = newSharedPtr(ServiceObj[T])
-  result[].handle = newServiceHandle(node.handle, getServiceTypeSupport(T), serviceName, qos)
+  result[].typesupport = getServiceTypesupport[T]()
+  result[].handle = newServiceHandle(node.handle, result[].typesupport.rosidlTypesupport, serviceName, qos)
   result[].waitable = result[].handle.toWaitable()
 
 proc createService*(node: Node, T: typedesc[SomeService], serviceName: string, qos: QoSProfile): Service[T] =
@@ -34,26 +36,28 @@ proc waitable*(self: ServiceBase | Service): Waitable =
 
 proc takeRequest*[T: SomeService](self: Service[T], req: var T.Request): Option[ServiceSend[T]] =
   var
-    cReq = default(T.Request.CType)
+    rosReq = self[].typesupport.createRequest()
     info = default(rmw_service_info_t)
   var ret: rcl_ret_t
   withLock self[].handle.getLock():
     withLock getRclGlobalLock():
-      ret = rcl_take_request_with_info(self[].handle.getRclService(), addr info, addr cReq)
+      ret = rcl_take_request_with_info(self[].handle.getRclService(), addr info, rosReq)
   case ret
   of RCL_RET_OK:
-    cMessageToNim(cReq, req)
+    req = self[].typesupport.decodeRequest(rosReq)
     some ServiceSend[T](
       service: self,
       requestId: info.request_id
     )
   of RCL_RET_SERVICE_TAKE_FAILED:
+    self[].typesupport.deleteRequest(rosReq)
     none ServiceSend[T]
   else:
+    self[].typesupport.deleteRequest(rosReq)
     wrapError ret
     unreachable()
 
 proc send*[T: SomeService](self: ServiceSend[T], resp: T.Response) =
-  var cResp = default(T.Response.CType)
-  nimMessageToC(resp, cResp)
-  wrapError rcl_send_response(self.service.handle.getRclService(), unsafeAddr self.requestId, addr cResp)
+  let rosResp = self.service[].typesupport.encodeResponse(resp)
+  defer: self.service[].typesupport.deleteResponse(rosResp)
+  wrapError rcl_send_response(self.service.handle.getRclService(), unsafeAddr self.requestId, rosResp)
