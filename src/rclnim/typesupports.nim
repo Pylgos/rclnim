@@ -1,7 +1,8 @@
-import ./rosinterfaces
+import ./typesupports/[types, typesupport_c]
+export types
 
-proc getMessageTypeSupport*(T: typedesc[SomeMessage]): MessageTypeSupport =
-  T.getCTypeSupport()
+proc getMessageTypesupport*[T](): MessageTypesupport[T] =
+  getCMessageTypesupport[T]()
 
-proc getServiceTypeSupport*(T: typedesc[SomeService]): ServiceTypeSupport =
-  T.getCTypeSupport()
+proc getServiceTypesupport*[T](): ServiceTypesupport[T] =
+  getCServiceTypesupport[T]()

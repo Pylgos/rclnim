@@ -10,12 +10,14 @@ type
   SubscriptionBase* = SharedPtr[SubscriptionBaseObj]
 
   SubscriptionObj[T] = object of SubscriptionBaseObj
+    typesupport*: MessageTypesupport[T]
 
   Subscription*[T] = SharedPtr[SubscriptionObj[T]]
 
 proc createSubscription*[T: SomeMessage](node: Node, topicName: string, qos: QoSProfile): Subscription[T] =
   result = newSharedPtr(SubscriptionObj[T])
-  result[].handle = newSubscriptionHandle(node.handle, getMessageTypeSupport(T), topicName, qos)
+  result[].typesupport = getMessageTypeSupport[T]()
+  result[].handle = newSubscriptionHandle(node.handle, result[].typesupport.rosidlTypesupport, topicName, qos)
   result[].waitable = result[].handle.toWaitable()
 
 proc createSubscription*(node: Node, T: typedesc[SomeMessage], topicName: string, qos: QoSProfile): Subscription[T] =
@@ -28,15 +30,17 @@ proc waitable*(self: SubscriptionBase | Subscription): Waitable =
   self[].waitable
 
 proc take*[T](self: Subscription[T], msg: var T): bool =
-  var cMsg: T.CType
+  let rosMsg = self[].typesupport.create()
   var ret: rcl_ret_t
   withLock getRclGlobalLock():
-    ret = rcl_take(self.handle.getRclSubscription(), addr cMsg, nil, nil)
+    ret = rcl_take(self.handle.getRclSubscription(), rosMsg, nil, nil)
   case ret
   of RCL_RET_OK:
-    cMessageToNim(cMsg, msg)
+    msg = self[].typesupport.decode(rosMsg)
     result = true
   of RCL_RET_SUBSCRIPTION_TAKE_FAILED:
+    self[].typesupport.delete(rosMsg)
     result = false
   else:
+    self[].typesupport.delete(rosMsg)
     wrapError ret

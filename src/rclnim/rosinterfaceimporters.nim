@@ -167,7 +167,7 @@ proc writeImportStmt(path: string, module: Module, res: var NimNode) =
 macro importInterface*(first: untyped, rest: varargs[untyped]): untyped =
   let modules = parseImport(first & rest.toSeq)
   let pkgName = modules[0].pkg
-  let libPath = currentSourcePath/../"rosinterfaces.nim"
+  let libPath = currentSourcePath.parentDir()
   
   let res = gorgeEx(fmt"{helperExePath.quoteShell} {pkgName.quoteShell} {getBindingDir().quoteShell} {getAltBindingDir().quoteShell} {libPath.quoteShell}")
   if res.exitCode != 0:
