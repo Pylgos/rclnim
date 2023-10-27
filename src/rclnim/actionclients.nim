@@ -1,4 +1,5 @@
 import ./[rcl, handles, contexts, nodes, errors, utils, typesupports, rosinterfaces, waitsets, rosinterfaceimporters]
+import ./private/actioninternaltypes
 import std/[locks, options]
 import concurrent/smartptrs
 importInterface action_msgs/msg/goal_info
@@ -16,6 +17,7 @@ type
   ActionClientBase* = SharedPtr[ActionClientBaseObj]
 
   ActionClientObj[T: SomeAction] = object of ActionClientBaseObj
+    typesupport: ActionTypesupport[T]
 
   ActionClient*[T: SomeAction] = SharedPtr[ActionClientObj[T]]
 
@@ -30,7 +32,8 @@ disallowCopy ActionClientBaseObj
 
 proc createActionClient*[T: SomeAction](node: Node, actionName: string): ActionClient[T] =
   result = newSharedPtr(ActionClientObj[T])
-  result[].handle = newActionClientHandle(node.handle, getActionTypeSupport(T), actionName)
+  result[].typesupport = getActionTypesupport[T]()
+  result[].handle = newActionClientHandle(node.handle, result[].typesupport.rosidlTypesupport, actionName)
   let w = result[].handle.toWaitables()
   result[].feedbackWaitable = w.feedback
   result[].statusWaitable = w.status
@@ -60,7 +63,11 @@ proc resultResponseWaitable*(self: ActionClientBase | ActionClient): Waitable =
   self[].resultResponseWaitable
 
 proc sendGoal*[T](self: ActionClient[T], goal: T.Goal): GoalResponseRecv[T] =
-  var cReq = default(T.Request.CType)
+  var req = SendGoalRequest[T](
+      
+    goal: goal
+  )
+  var rosReq = self.
   nimMessageToC(goal, cReq)
   var num: int64 = 0
   wrapError rcl_action_send_goal_request(self.handle.getRclClient(), addr cReq, addr num)

@@ -6,3 +6,6 @@ proc getMessageTypesupport*[T](): MessageTypesupport[T] =
 
 proc getServiceTypesupport*[T](): ServiceTypesupport[T] =
   getCServiceTypesupport[T]()
+
+proc getActionTypesupport*[T](): ActionTypesupport[T] =
+  getActionTypesupport[T]()

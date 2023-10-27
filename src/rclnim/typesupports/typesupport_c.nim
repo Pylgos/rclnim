@@ -1,7 +1,9 @@
 import system/ansi_c
 import std/[strformat, genasts, macros, macrocache, typetraits]
-import ../[rosinterfaces, rospkgfinder, rcl]
+import ../[rosinterfaces, rosinterfaceimporters, rospkgfinder, rcl]
 import ./types
+import ../private/actioninternaltypes
+importInterface action_msgs/msg/goal_status_array
 
 
 const
@@ -25,6 +27,9 @@ proc getRosidlMessageTypesupport[T](): ptr rosidl_message_type_support_t =
 
 proc getRosidlServiceTypesupport[T](): ptr rosidl_service_type_support_t =
   cast[ptr rosidl_service_type_support_t](getCTypeSupportImpl(T.packageName, "srv", T.typeName, "get_service_type_support_handle"))
+
+proc getRosidlActionTypesupport[T](): ptr rosidl_action_type_support_t =
+  cast[ptr rosidl_action_type_support_t](getCTypeSupportImpl(T.packageName, "action", T.typeName, "get_action_type_support_handle"))
 
 
 type
@@ -214,4 +219,16 @@ proc getCServiceTypesupport*[T](): ServiceTypesupport[T] =
     rosidlTypesupport: getRosidlServiceTypesupport[T](),
     requestVTable: getVTable[T.Request](),
     responseVTable: getVTable[T.Response](),
+  )
+
+proc getCActionTypesupport*[T](): ActionTypesupport[T] =
+  ActionTypesupport[T](
+    name: "c",
+    rosidlTypesupport: getRosidlActionTypesupport[T](),
+    sendGoalRequestVTable: getVTable[SendGoalRequest[T]](),
+    sendGoalResponseVTable: getVTable[SendGoalResponse](),
+    getResultRequestVTable: getVTable[GetResultRequest](),
+    getResultResponseVTable: getVTable[GetResultResponse[T]](),
+    feedbackVTable: getVTable[T.Feedback](),
+    goalStatusArrayVTable: getVTable[GoalStatusArray](),
   )
