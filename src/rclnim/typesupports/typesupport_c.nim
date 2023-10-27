@@ -112,8 +112,7 @@ func genCTypeAux(T: typedesc): auto {.gcsafe, raises: [].} =
   genCTypeImpl(Ty())
 
 macro CTypeHack(T: untyped): untyped =
-  # HACK: compiler bug workaround
-  newCall(ctypeTemplateSyms, newCall(bindSym"typeof", T))
+  newCall(ctypeTemplateSyms, T)
 
 template CType(T: typedesc[bool]): untyped = bool
 template CType(T: typedesc[SomeNumber]): untyped = T
