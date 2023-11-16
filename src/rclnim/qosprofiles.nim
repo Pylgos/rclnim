@@ -52,14 +52,14 @@ else:
       ManualByTopic
       Unknown
 
-func toRmw*(p: HistoryPolicy): rmw_qos_history_policy_t =
+func to*(p: HistoryPolicy, _: typedesc[rmw_qos_history_policy_t]): rmw_qos_history_policy_t =
   case p
   of KeepLast: RMW_QOS_POLICY_HISTORY_KEEP_LAST
   of KeepAll: RMW_QOS_POLICY_HISTORY_KEEP_ALL
   of SystemDefault: RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT
   of Unknown: RMW_QOS_POLICY_HISTORY_UNKNOWN
 
-func fromRmw*(p: rmw_qos_history_policy_t): HistoryPolicy =
+func to*(p: rmw_qos_history_policy_t, _: typedesc[HistoryPolicy]): HistoryPolicy =
   when rmwHasBestAvailableQoS:
     case p
     of RMW_QOS_POLICY_HISTORY_KEEP_LAST: KeepLast
@@ -74,7 +74,7 @@ func fromRmw*(p: rmw_qos_history_policy_t): HistoryPolicy =
     of RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT: SystemDefault
     of RMW_QOS_POLICY_HISTORY_UNKNOWN: Unknown
 
-func toRmw*(p: ReliabilityPolicy): rmw_qos_reliability_policy_t =
+func to*(p: ReliabilityPolicy, _: typedesc[rmw_qos_reliability_policy_t]): rmw_qos_reliability_policy_t =
   when rmwHasBestAvailableQoS:
     case p
     of BestEffort: RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT
@@ -89,7 +89,7 @@ func toRmw*(p: ReliabilityPolicy): rmw_qos_reliability_policy_t =
     of SystemDefault: RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT
     of Unknown: RMW_QOS_POLICY_RELIABILITY_UNKNOWN
 
-func fromRmw*(p: rmw_qos_reliability_policy_t): ReliabilityPolicy =
+func to*(p: rmw_qos_reliability_policy_t, _: typedesc[ReliabilityPolicy]): ReliabilityPolicy =
   when rmwHasBestAvailableQoS:
     case p
     of RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT: BestEffort
@@ -104,7 +104,7 @@ func fromRmw*(p: rmw_qos_reliability_policy_t): ReliabilityPolicy =
     of RMW_QOS_POLICY_RELIABILITY_SYSTEM_DEFAULT: SystemDefault
     of RMW_QOS_POLICY_RELIABILITY_UNKNOWN: Unknown
 
-func toRmw*(p: DurabilityPolicy): rmw_qos_durability_policy_t =
+func to*(p: DurabilityPolicy, _: typedesc[rmw_qos_durability_policy_t]): rmw_qos_durability_policy_t =
   when rmwHasBestAvailableQoS:
     case p
     of Volatile: RMW_QOS_POLICY_DURABILITY_VOLATILE
@@ -119,7 +119,7 @@ func toRmw*(p: DurabilityPolicy): rmw_qos_durability_policy_t =
     of SystemDefault: RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT
     of Unknown: RMW_QOS_POLICY_DURABILITY_UNKNOWN
 
-func fromRmw*(p: rmw_qos_durability_policy_t): DurabilityPolicy =
+func to*(p: rmw_qos_durability_policy_t, _: typedesc[DurabilityPolicy]): DurabilityPolicy =
   when rmwHasBestAvailableQoS:
     case p
     of RMW_QOS_POLICY_DURABILITY_VOLATILE: Volatile
@@ -134,7 +134,7 @@ func fromRmw*(p: rmw_qos_durability_policy_t): DurabilityPolicy =
     of RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT: SystemDefault
     of RMW_QOS_POLICY_DURABILITY_UNKNOWN: Unknown
 
-func toRmw*(p: LivelinessPolicy): rmw_qos_liveliness_policy_t =
+func to*(p: LivelinessPolicy, _: typedesc[rmw_qos_liveliness_policy_t]): rmw_qos_liveliness_policy_t =
   when rmwHasBestAvailableQoS:
     case p
     of SystemDefault: RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT
@@ -149,7 +149,7 @@ func toRmw*(p: LivelinessPolicy): rmw_qos_liveliness_policy_t =
     of ManualByTopic: RMW_QOS_POLICY_LIVELINESS_MANUAL_BY_TOPIC
     of Unknown: RMW_QOS_POLICY_LIVELINESS_UNKNOWN
 
-func fromRmw*(p: rmw_qos_liveliness_policy_t): LivelinessPolicy =
+func to*(p: rmw_qos_liveliness_policy_t, _: typedesc[LivelinessPolicy]): LivelinessPolicy =
   when rmwHasBestAvailableQoS:
     case p
     of RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT: LivelinessPolicy.SystemDefault
@@ -178,10 +178,10 @@ type QoSProfile* = object
   avoidRosNamespaceConventions*: bool
 
 func toRmw*(self: QoSProfile): rmw_qos_profile_t =
-  result.history = self.history.toRmw()
-  result.reliability = self.reliability.toRmw()
-  result.durability = self.durability.toRmw()
-  result.liveliness = self.liveliness.toRmw()
+  result.history = self.history.to(rmw_qos_history_policy_t)
+  result.reliability = self.reliability.to(rmw_qos_reliability_policy_t)
+  result.durability = self.durability.to(rmw_qos_durability_policy_t)
+  result.liveliness = self.liveliness.to(rmw_qos_liveliness_policy_t)
   result.depth = self.depth.csize_t
   result.deadline = self.deadline.to(rmw_time_t)
   result.lifespan = self.lifespan.to(rmw_time_t)
