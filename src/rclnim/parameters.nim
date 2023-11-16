@@ -63,7 +63,7 @@ const
 
 proc publishParamEvent(self: var ParamServerObj, ev: ParamEvent) =
   var msg = ParameterEvent(node: self.fullyQualifiedNodeName)
-  let p = Parameter(name: ev.name, value: ev.param.toMsg())
+  let p = Parameter(name: ev.name, value: ev.param.to(ParameterValue))
   case ev.kind
   of Added:
     msg.newParameters.add p
@@ -112,7 +112,7 @@ proc task(self: ptr ParamServerObj) =
       result.values = newSeq[ParameterValue](request.names.len)
       for i, name in request.names:
         if name in self.params:
-          result.values[i] = self[].getParam(name).toMsg()
+          result.values[i] = self[].getParam(name).to(ParameterValue)
         else:
           result.values[i] = ParameterValue(type: ParameterType.PARAMETER_NOT_SET)
   
@@ -121,7 +121,7 @@ proc task(self: ptr ParamServerObj) =
       result.types = newSeq[uint8](request.names.len)
       for i, name in request.names:
         if name in self.params:
-          result.types[i] = self[].getParam(name).toMsg().type
+          result.types[i] = self[].getParam(name).to(ParameterValue).type
         else:
           result.types[i] = ParameterType.PARAMETER_NOT_SET
   
@@ -131,7 +131,7 @@ proc task(self: ptr ParamServerObj) =
       for i, p in request.parameters:
         if p.name in self.params:
           try:
-            self[].setParam(p.name, p.value.toParam(), notifySelf = true)
+            self[].setParam(p.name, p.value.to(ParamValue), notifySelf = true)
             result.results[i] = SetParametersResult(successful: true)
           except ValueError as e:
             result.results[i] = SetParametersResult(successful: false, reason: e.msg)
@@ -147,7 +147,7 @@ proc task(self: ptr ParamServerObj) =
       for p in request.parameters:
         if p.name in self.params:
           try:
-            self[].setParam(p.name, p.value.toParam(), checkOnly = true)
+            self[].setParam(p.name, p.value.to(ParamValue), checkOnly = true)
           except ValueError as e:
             canSet = false
             reason = e.msg
@@ -156,7 +156,7 @@ proc task(self: ptr ParamServerObj) =
           reason = "parameter is not declared"
       if canSet:
         for p in request.parameters:
-          self[].setParam(p.name, p.value.toParam(), notifySelf = true)
+          self[].setParam(p.name, p.value.to(ParamValue), notifySelf = true)
         result.result = SetParametersResult(successful: true)
       else:
         result.result = SetParametersResult(successful: false, reason: reason)
@@ -166,7 +166,7 @@ proc task(self: ptr ParamServerObj) =
       result.descriptors = newSeq[ParameterDescriptor](request.names.len)
       for i, name in request.names:
         if name in self.params:
-          result.descriptors[i] = self.params[name].desc.toMsg()
+          result.descriptors[i] = self.params[name].desc.to(ParameterDescriptor)
         else:
           result.descriptors[i] = ParameterDescriptor()
   
@@ -341,7 +341,7 @@ proc declare*(self; desc: ParamDescriptor, defaultVal: ParamValue) =
 
 proc declare*[T](self; name: string, defaultVal: sink T, description = "", readOnly = false, constraint = T.toRangeConstraint()) =
   let
-    val = defaultVal.toParam()
+    val = defaultVal.to(ParamValue)
     desc = ParamDescriptor(name: name, kind: val.kind, description: description, readOnly: readOnly, rangeConstraint: constraint)
   self.declare(desc, val)
 
@@ -355,7 +355,7 @@ proc set*(self; name: string, value: sink ParamValue, checkOnly = false, notifyS
 
 proc set*[T](self; name: string, value: sink T, checkOnly = false, notifySelf = false) =
   withLock self[].paramsLock:
-    self[].setParam(name, value.toParam(), checkOnly, notifySelf)
+    self[].setParam(name, value.to(ParamValue), checkOnly, notifySelf)
 
 proc get*(self; name: string): ParamValue =
   withLock self[].paramsLock:

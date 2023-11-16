@@ -91,7 +91,7 @@ macro set*[T](self: ObjParamServer[T], fld: untyped, value: untyped): untyped =
     self.server.set(fieldName, access)
 
 proc declareParam[T](server: ParamServer, name: string, val: T) =
-  when compiles(toParam(val)):
+  when compiles(val.to(ParamValue)):
     server.declare(name, val)
   elif val is object:
     for fieldName, fieldVal in val.fieldPairs:

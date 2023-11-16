@@ -60,6 +60,3 @@ func to*(t: RosTime, _: typedesc[TimeMsg]): TimeMsg =
 
 func to*(m: TimeMsg, _: typedesc[RosTime]): RosTime =
   RosTime.init(int64(m.sec) * 1_000_000_000 + int64(m.nanosec))
-
-func toMsg*(t: RosTime): TimeMsg =
-  t.to(TimeMsg)

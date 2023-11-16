@@ -78,7 +78,7 @@ type
     name*: string
     param*: ParamValue
 
-func toMsg*(p: sink ParamValue): ParameterValue =
+func to*(p: sink ParamValue, _: typedesc[ParameterValue]): ParameterValue =
   case p.kind
   of Bool:
     result.type = ParameterType.PARAMETER_BOOL
@@ -108,27 +108,27 @@ func toMsg*(p: sink ParamValue): ParameterValue =
     result.type = ParameterType.PARAMETER_STRING_ARRAY
     result.stringArrayValue = p.strArrayVal
 
-func toParam*(v: bool): ParamValue = ParamValue(kind: Bool, boolVal: v)
-func toParam*(v: int64): ParamValue = ParamValue(kind: Int, intVal: v)
-func toParam*(v: float64): ParamValue = ParamValue(kind: Double, doubleVal: v)
-func toParam*(v: sink string): ParamValue = ParamValue(kind: Str, strVal: v)
-func toParam*(v: sink seq[byte]): ParamValue = ParamValue(kind: ByteArray, byteArrayVal: v)
-func toParam*(v: sink seq[bool]): ParamValue = ParamValue(kind: BoolArray, boolArrayVal: v)
-func toParam*(v: sink seq[int64]): ParamValue = ParamValue(kind: IntArray, intArrayVal: v)
-func toParam*(v: sink seq[float64]): ParamValue = ParamValue(kind: DoubleArray, doubleArrayVal: v)
-func toParam*(v: sink seq[string]): ParamValue = ParamValue(kind: StringArray, strArrayVal: v)
+func to*(v: bool, _: typedesc[ParamValue]): ParamValue = ParamValue(kind: Bool, boolVal: v)
+func to*(v: int64, _: typedesc[ParamValue]): ParamValue = ParamValue(kind: Int, intVal: v)
+func to*(v: float64, _: typedesc[ParamValue]): ParamValue = ParamValue(kind: Double, doubleVal: v)
+func to*(v: sink string, _: typedesc[ParamValue]): ParamValue = ParamValue(kind: Str, strVal: v)
+func to*(v: sink seq[byte], _: typedesc[ParamValue]): ParamValue = ParamValue(kind: ByteArray, byteArrayVal: v)
+func to*(v: sink seq[bool], _: typedesc[ParamValue]): ParamValue = ParamValue(kind: BoolArray, boolArrayVal: v)
+func to*(v: sink seq[int64], _: typedesc[ParamValue]): ParamValue = ParamValue(kind: IntArray, intArrayVal: v)
+func to*(v: sink seq[float64], _: typedesc[ParamValue]): ParamValue = ParamValue(kind: DoubleArray, doubleArrayVal: v)
+func to*(v: sink seq[string], _: typedesc[ParamValue]): ParamValue = ParamValue(kind: StringArray, strArrayVal: v)
 
-func toParam*(msg: ParameterValue): ParamValue =
+func to*(msg: ParameterValue, _: typedesc[ParamValue]): ParamValue =
   case msg.type
-  of ParameterType.PARAMETER_BOOL: toParam(msg.boolValue)
-  of ParameterType.PARAMETER_INTEGER: toParam(msg.integerValue)
-  of ParameterType.PARAMETER_DOUBLE: toParam(msg.doubleValue)
-  of ParameterType.PARAMETER_STRING: toParam(msg.stringValue)
-  of ParameterType.PARAMETER_BYTE_ARRAY: toParam(msg.byteArrayValue)
-  of ParameterType.PARAMETER_BOOL_ARRAY: toParam(msg.boolArrayValue)
-  of ParameterType.PARAMETER_INTEGER_ARRAY: toParam(msg.integerArrayValue)
-  of ParameterType.PARAMETER_DOUBLE_ARRAY: toParam(msg.doubleArrayValue)
-  of ParameterType.PARAMETER_STRING_ARRAY: toParam(msg.stringArrayValue)
+  of ParameterType.PARAMETER_BOOL: msg.boolValue.to(ParamValue)
+  of ParameterType.PARAMETER_INTEGER: msg.integerValue.to(ParamValue)
+  of ParameterType.PARAMETER_DOUBLE: msg.doubleValue.to(ParamValue)
+  of ParameterType.PARAMETER_STRING: msg.stringValue.to(ParamValue)
+  of ParameterType.PARAMETER_BYTE_ARRAY: msg.byteArrayValue.to(ParamValue)
+  of ParameterType.PARAMETER_BOOL_ARRAY: msg.boolArrayValue.to(ParamValue)
+  of ParameterType.PARAMETER_INTEGER_ARRAY: msg.integerArrayValue.to(ParamValue)
+  of ParameterType.PARAMETER_DOUBLE_ARRAY: msg.doubleArrayValue.to(ParamValue)
+  of ParameterType.PARAMETER_STRING_ARRAY: msg.stringArrayValue.to(ParamValue)
   of ParameterType.PARAMETER_NOT_SET:
     raise newException(ValueError):
       "parameter type not set"
@@ -136,9 +136,9 @@ func toParam*(msg: ParameterValue): ParamValue =
     raise newException(ValueError):
       fmt"invalid parameter type '{msg.type}'"
 
-func toMsg*(desc: ParamDescriptor): ParameterDescriptor =
+func to*(desc: ParamDescriptor, _: typedesc[ParameterDescriptor]): ParameterDescriptor =
   result.name = desc.name
-  result.type = ParamValue(kind: desc.kind).toMsg().type
+  result.type = ParamValue(kind: desc.kind).to(ParameterValue).type
   result.description = desc.description
   result.additionalConstraints = desc.additionalConstraints
   result.readOnly = desc.readOnly
