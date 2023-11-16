@@ -35,25 +35,31 @@ func `<=`*(a, b: RosTime): bool =
 func `==`*(a, b: RosTime): bool =
   a.nanoseconds == b.nanoseconds
 
-func fromRcl*(t: rcl_time_point_t): RosTime =
+func to*(t: rcl_time_point_t, _: typedesc[RosTime]): RosTime =
   if t.clock_type != RCL_ROS_TIME:
     raise newException(ValueError):
       fmt"invalid source clock type '{t.clock_type}' != RCL_ROS_TIME"
   RosTime.init(t.nanoseconds)
 
-func toRcl*(t: RosTime): rcl_time_point_t =
+func to*(t: RosTime, _: typedesc[rcl_time_point_t]): rcl_time_point_t =
   result.nanoseconds = t.nanoseconds
   result.clock_type = RCL_ROS_TIME
 
-func toRmw*(d: Duration): rmw_time_t =
+func to*(d: Duration, _: typedesc[rmw_time_t]): rmw_time_t =
   rmw_time_from_nsec(d.inNanoseconds)
 
-func fromRmw*(d: rmw_time_t): Duration =
+func to*(d: rmw_time_t, _: typedesc[Duration]): Duration =
   initDuration(nanoseconds = rmw_time_total_nsec(d))
 
-func toMsg*(t: RosTime): TimeMsg =
+func to*(t: RosTime, _: typedesc[TimeMsg]): TimeMsg =
   let
     sec = t.nanoseconds div 1_000_000_000
     nanosec = t.nanoseconds - sec * 1_000_000_000
   result.sec = sec.int32
   result.nanosec = nanosec.uint32
+
+func to*(m: TimeMsg, _: typedesc[RosTime]): RosTime =
+  RosTime.init(int64(m.sec) * 1_000_000_000 + int64(m.nanosec))
+
+func toMsg*(t: RosTime): TimeMsg =
+  t.to(TimeMsg)
