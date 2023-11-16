@@ -183,9 +183,9 @@ func toRmw*(self: QoSProfile): rmw_qos_profile_t =
   result.durability = self.durability.toRmw()
   result.liveliness = self.liveliness.toRmw()
   result.depth = self.depth.csize_t
-  result.deadline = self.deadline.toRmw()
-  result.lifespan = self.lifespan.toRmw()
-  result.livelinessLeaseDuration = self.livelinessLeaseDuration.toRmw()
+  result.deadline = self.deadline.to(rmw_time_t)
+  result.lifespan = self.lifespan.to(rmw_time_t)
+  result.livelinessLeaseDuration = self.livelinessLeaseDuration.to(rmw_time_t)
   result.avoidRosNamespaceConventions = self.avoidRosNamespaceConventions
 
 func initQoSProfile*(
