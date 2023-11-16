@@ -4,6 +4,7 @@ import rospkgfinder
 when not defined(nimdoc):
   static:
     configureRosPackage("rcl")
+    configureRosPackage("rcl_action")
 
 const rmwHasBestAvailableQoS* = false
 

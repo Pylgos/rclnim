@@ -8,30 +8,21 @@ template isRosMessageType*(T: typedesc): bool =
 template isRosServiceType*(T: typedesc): bool =
   false
 
-type
-  # MessageTypeSupport* = distinct pointer
-  # ServiceTypeSupport* = distinct pointer
+template isRosActionType*(T: typedesc): bool =
+  false
 
+type
   SomeMessage* = concept type T
     T.isRosMessageType
 
   SomeService* = concept type T
     T.isRosServiceType
 
+  SomeAction* = concept type T
+    T.isRosActionType
+
 proc packageName*(T: typedesc[SomeMessage | SomeService]): string =
   getCustomPragmaVal(T, packageNamePragma).name
 
 proc typeName*(T: typedesc[SomeMessage | SomeService]): string =
   getCustomPragmaVal(T, typeNamePragma).name
-
-# when isMainModule:
-#   block:
-#     var s: CMessageSequence[int]
-#     var n: seq[int]
-#     n.nimMessageToC(s)
-  
-#   block:
-#     var src = 44
-#     var dest: int
-#     src.cMessageToNim(dest)
-#     echo dest

@@ -27,7 +27,7 @@ type
     of rikService:
       request*, response*: RosMsgDef
     of rikAction:
-      goal*, feedback*, result*: RosMsgDef
+      goal*, result*, feedback*: RosMsgDef
 
   LineKind* = enum
     lkBlank
@@ -407,8 +407,8 @@ proc parseRosIdl*(content, pkgName, typeName: string): RosInterfaceDef =
       pkgName: pkgName,
       typeName: typeName,
       goal: parseMsgDef(separated[0], pkgName),
-      feedback: parseMsgDef(separated[1], pkgName),
-      result: parseMsgDef(separated[2], pkgName),
+      result: parseMsgDef(separated[1], pkgName),
+      feedback: parseMsgDef(separated[2], pkgName),
     )
     result.dependencyPkgs = result.goal.dependencyPkgs + result.feedback.dependencyPkgs + result.result.dependencyPkgs
     result.dependencyTypes = result.goal.dependencyTypes + result.feedback.dependencyTypes + result.result.dependencyTypes

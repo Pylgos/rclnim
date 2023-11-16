@@ -1,4 +1,4 @@
-import "."/[rcl, errors, utils, qosprofiles, rosinterfaces]
+import "."/[rcl, errors, utils, qosprofiles, rosinterfaces, clocks]
 import concurrent/smartptrs
 import std/locks
 
@@ -43,6 +43,18 @@ type
     lock: ptr Lock
     node: NodeHandle
     rclCLient: rcl_client_t
+  
+  ActionClientHandleObj = object
+    initialized: bool
+    lock: ptr Lock
+    node: NodeHandle
+    rclActionClient: rcl_action_client_t
+  
+  ActionServerHandleObj = object
+    initialized: bool
+    lock: ptr Lock
+    node: NodeHandle
+    rclActionServer: rcl_action_server_t
 
   ContextHandle* = SharedPtr[ContextHandleObj]
 
@@ -60,6 +72,10 @@ type
 
   ClientHandle* = SharedPtr[ClientHandleObj]
 
+  ActionClientHandle* = SharedPtr[ActionClientHandleObj]
+
+  ActionServerHandle* = SharedPtr[ActionServerHandleObj]
+
 disallowCopy ContextHandleObj
 disallowCopy GuardConditionHandleObj
 disallowCopy WaitSetHandleObj
@@ -68,6 +84,8 @@ disallowCopy SubscriptionHandleObj
 disallowCopy PublisherHandleObj
 disallowCopy ServiceHandleObj
 disallowCopy ClientHandleObj
+disallowCopy ActionClientHandleObj
+disallowCopy ActionServerHandleObj
 
 proc `=destroy`(self: ContextHandleObj) {.wrapDestructorError.} =
   if self.initialized:
@@ -121,6 +139,23 @@ proc `=destroy`(self: ClientHandleObj) {.wrapDestructorError.} =
     self.lock[].deinitLock()
     self.lock.deallocShared()
   `=destroy`(self.node)
+
+proc `=destroy`(self: ActionClientHandleObj) {.wrapDestructorError.} =
+  if self.initialized:
+    withLock getRclGlobalLock():
+      wrapError rcl_action_client_fini(addr self.rclActionClient, addr self.node.rclNode)
+      self.lock[].deinitLock()
+      self.lock.deallocShared()
+    `=destroy`(self.node)
+
+proc `=destroy`(self: ActionServerHandleObj) {.wrapDestructorError.} =
+  if self.initialized:
+    withLock getRclGlobalLock():
+      wrapError rcl_action_server_fini(addr self.rclActionServer, addr self.node.rclNode)
+      self.lock[].deinitLock()
+      self.lock.deallocShared()
+    `=destroy`(self.node)
+
 
 proc newContextHandle*(
     args: openArray[string],
@@ -274,4 +309,49 @@ proc getRclClient*(s: ClientHandle): ptr rcl_client_t =
   addr s.rclClient
 
 proc getLock*(s: ClientHandle): var Lock =
+  s.lock[]
+
+
+proc newActionClientHandle*(
+    node: NodeHandle,
+    typeSupport: ActionTypeSupport,
+    actionName: string): ActionClientHandle =
+  result = newSharedPtr(ActionClientHandleObj)
+  result.node = node
+  result.rclActionClient = rcl_action_get_zero_initialized_client()
+  withLock getRclGlobalLock():
+    var opts = rcl_action_client_get_default_options()
+    wrapError rcl_action_client_init(
+      addr result.rclActionClient, node.getRclNode(), cast[ptr rosidl_action_type_support_t](typeSupport), actionName, addr opts)
+  result.lock = createShared(Lock)
+  result.lock[].initLock()
+  result.initialized = true
+
+proc getRclActionClient*(s: ActionClientHandle): ptr rcl_action_client_t =
+  addr s.rclActionClient
+
+proc getLock*(s: ActionClientHandle): var Lock =
+  s.lock[]
+
+
+proc newActionServerHandle*(
+    node: NodeHandle,
+    clock: Clock,
+    typeSupport: ActionTypeSupport,
+    actionName: string): ActionServerHandle =
+  result = newSharedPtr(ActionServerHandleObj)
+  result.node = node
+  result.rclActionServer = rcl_action_get_zero_initialized_server()
+  withLock getRclGlobalLock():
+    var opts = rcl_action_server_get_default_options()
+    wrapError rcl_action_server_init(
+      addr result.rclActionServer, node.getRclNode(), clock.getRclClock, cast[ptr rosidl_action_type_support_t](typeSupport), actionName, addr opts)
+  result.lock = createShared(Lock)
+  result.lock[].initLock()
+  result.initialized = true
+
+proc getRclActionServer*(s: ActionServerHandle): ptr rcl_action_server_t =
+  addr s.rclActionServer
+
+proc getLock*(s: ActionServerHandle): var Lock =
   s.lock[]

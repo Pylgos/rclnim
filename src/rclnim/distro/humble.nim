@@ -91,6 +91,12 @@ type
     RCL_SUBSCRIPTION_REQUESTED_INCOMPATIBLE_QOS = 2,
     RCL_SUBSCRIPTION_MESSAGE_LOST = 3
 type
+  enum_rcl_action_goal_event_e* {.size: sizeof(cuint).} = enum
+    GOAL_EVENT_EXECUTE = 0, GOAL_EVENT_CANCEL_GOAL = 1, GOAL_EVENT_SUCCEED = 2,
+    GOAL_EVENT_ABORT = 3, GOAL_EVENT_CANCELED = 4, GOAL_EVENT_NUM_EVENTS = 5
+type
+  struct_rcl_action_client_impl_s* = distinct object
+type
   struct_rcl_timer_impl_s* = distinct object
 type
   struct_rcl_wait_set_impl_s* = distinct object
@@ -101,13 +107,23 @@ type
 type
   RMW_DURATION_UNSPECIFIED* = distinct object
 type
+  action_msgs_msg_GoalStatus_STATUS_ABORTED* = distinct object
+type
   struct_rcl_publisher_impl_s* = distinct object
 type
-  struct_rmw_context_impl_s* = distinct object
+  action_msgs_msg_GoalStatus_STATUS_CANCELING* = distinct object
+type
+  action_msgs_msg_GoalStatus_STATUS_EXECUTING* = distinct object
 type
   RCUTILS_WARN_UNUSED* = distinct object
 type
+  struct_rmw_context_impl_s* = distinct object
+type
   struct_rcl_service_impl_s* = distinct object
+type
+  struct_rcl_action_goal_handle_impl_s* = distinct object
+type
+  action_msgs_msg_GoalStatus_STATUS_UNKNOWN* = distinct object
 type
   UINT64_MAX* = distinct object
 type
@@ -115,11 +131,17 @@ type
 type
   struct_rmw_init_options_impl_s* = distinct object
 type
+  action_msgs_msg_GoalStatus_STATUS_ACCEPTED* = distinct object
+type
   struct_rcl_context_impl_s* = distinct object
+type
+  action_msgs_msg_GoalStatus_STATUS_SUCCEEDED* = distinct object
 type
   struct_rcl_node_impl_s* = distinct object
 type
   internal_Thread_local* = distinct object
+type
+  struct_rcl_action_server_impl_s* = distinct object
 type
   struct_rcl_client_impl_s* = distinct object
 type
@@ -130,6 +152,8 @@ type
   struct_rcl_init_options_impl_s* = distinct object
 type
   RCUTILS_US_TO_NS* = distinct object
+type
+  action_msgs_msg_GoalStatus_STATUS_CANCELED* = distinct object
 type
   RCUTILS_MS_TO_NS* = distinct object
 type
@@ -692,6 +716,83 @@ type
   rcl_logging_output_handler_t* = rcutils_logging_output_handler_t ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/logging.h:34:42
   rmw_error_string_t* = rcutils_error_string_t ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/error_handling.h:34:32
   rmw_error_state_t* = rcutils_error_state_t ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/error_handling.h:37:31
+  rcl_action_goal_info_t* = action_msgs_msg_GoalInfo ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:63:36
+  action_msgs_msg_GoalInfo* = struct_action_msgs_msg_GoalInfo ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_info__struct.h:35:3
+  rcl_action_goal_status_t* = action_msgs_msg_GoalStatus ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:64:38
+  action_msgs_msg_GoalStatus* = struct_action_msgs_msg_GoalStatus ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_status__struct.h:101:3
+  struct_rcl_action_goal_status_array_s* {.pure, inheritable, bycopy.} = object
+    msg*: action_msgs_msg_GoalStatusArray ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:66:16
+    allocator*: rcl_allocator_t
+
+  action_msgs_msg_GoalStatusArray* = struct_action_msgs_msg_GoalStatusArray ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_status_array__struct.h:31:3
+  rcl_action_goal_status_array_t* = struct_rcl_action_goal_status_array_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:72:3
+  rcl_action_cancel_request_t* = action_msgs_srv_CancelGoal_Request ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:73:46
+  action_msgs_srv_CancelGoal_Request* = struct_action_msgs_srv_CancelGoal_Request ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/srv/detail/cancel_goal__struct.h:29:3
+  struct_rcl_action_cancel_response_s* {.pure, inheritable, bycopy.} = object
+    msg*: action_msgs_srv_CancelGoal_Response ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:75:16
+    allocator*: rcl_allocator_t
+
+  action_msgs_srv_CancelGoal_Response* = struct_action_msgs_srv_CancelGoal_Response ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/srv/detail/cancel_goal__struct.h:104:3
+  rcl_action_cancel_response_t* = struct_rcl_action_cancel_response_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:81:3
+  rcl_action_goal_state_t* = int8 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:87:16
+  rcl_action_goal_event_t* = enum_rcl_action_goal_event_e ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:111:3
+  rcl_action_client_impl_t* = struct_rcl_action_client_impl_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_client.h:31:41
+  struct_rcl_action_client_s* {.pure, inheritable, bycopy.} = object
+    impl*: ptr rcl_action_client_impl_t ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_client.h:34:16
+  
+  rcl_action_client_t* = struct_rcl_action_client_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_client.h:38:3
+  struct_rcl_action_client_options_s* {.pure, inheritable, bycopy.} = object
+    goal_service_qos*: rmw_qos_profile_t ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_client.h:41:16
+    result_service_qos*: rmw_qos_profile_t
+    cancel_service_qos*: rmw_qos_profile_t
+    feedback_topic_qos*: rmw_qos_profile_t
+    status_topic_qos*: rmw_qos_profile_t
+    allocator*: rcl_allocator_t
+
+  rcl_action_client_options_t* = struct_rcl_action_client_options_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_client.h:57:3
+  rosidl_action_type_support_t* = struct_rosidl_action_type_support_t ## Generated based on /nix/store/l5n428nlcyhhwzxy3s7albghm1xhss0j-rosidl_runtime_c-3.1.4/include/rosidl_runtime_c/rosidl_runtime_c/action_type_support_struct.h:28:45
+  rcl_action_goal_handle_impl_t* = struct_rcl_action_goal_handle_impl_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/goal_handle.h:30:46
+  struct_rcl_action_goal_handle_s* {.pure, inheritable, bycopy.} = object
+    impl*: ptr rcl_action_goal_handle_impl_t ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/goal_handle.h:33:16
+  
+  rcl_action_goal_handle_t* = struct_rcl_action_goal_handle_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/goal_handle.h:37:3
+  rcl_action_server_impl_t* = struct_rcl_action_server_impl_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_server.h:34:41
+  struct_rcl_action_server_s* {.pure, inheritable, bycopy.} = object
+    impl*: ptr rcl_action_server_impl_t ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_server.h:37:16
+  
+  rcl_action_server_t* = struct_rcl_action_server_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_server.h:41:3
+  struct_rcl_action_server_options_s* {.pure, inheritable, bycopy.} = object
+    goal_service_qos*: rmw_qos_profile_t ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_server.h:44:16
+    cancel_service_qos*: rmw_qos_profile_t
+    result_service_qos*: rmw_qos_profile_t
+    feedback_topic_qos*: rmw_qos_profile_t
+    status_topic_qos*: rmw_qos_profile_t
+    allocator*: rcl_allocator_t
+    result_timeout*: rcl_duration_t
+
+  rcl_action_server_options_t* = struct_rcl_action_server_options_s ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/action_server.h:62:3
+  struct_rmw_names_and_types_s* {.pure, inheritable, bycopy.} = object
+    names*: rcutils_string_array_t ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/names_and_types.h:32:32
+    types*: ptr rcutils_string_array_t
+
+  rmw_names_and_types_t* = struct_rmw_names_and_types_s ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/names_and_types.h:39:3
+  struct_rmw_topic_endpoint_info_s* {.pure, inheritable, bycopy.} = object
+    node_name*: cstring      ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/topic_endpoint_info.h:30:32
+    node_namespace*: cstring
+    topic_type*: cstring
+    endpoint_type*: rmw_endpoint_type_t
+    endpoint_gid*: array[24'i64, uint8]
+    qos_profile*: rmw_qos_profile_t
+
+  rmw_topic_endpoint_info_t* = struct_rmw_topic_endpoint_info_s ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/topic_endpoint_info.h:44:3
+  struct_rmw_topic_endpoint_info_array_s* {.pure, inheritable, bycopy.} = object
+    size*: csize_t           ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/topic_endpoint_info_array.h:28:32
+    info_array*: ptr rmw_topic_endpoint_info_t
+
+  rmw_topic_endpoint_info_array_t* = struct_rmw_topic_endpoint_info_array_s ## Generated based on /nix/store/djrk4ma78vcizb82q7pha3zqnj95b68m-rmw-6.1.1/include/rmw/rmw/topic_endpoint_info_array.h:34:3
+  rcl_names_and_types_t* = rmw_names_and_types_t ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/graph.h:40:31
+  rcl_topic_endpoint_info_t* = rmw_topic_endpoint_info_t ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/graph.h:45:35
+  rcl_topic_endpoint_info_array_t* = rmw_topic_endpoint_info_array_t ## Generated based on /nix/store/7p89ilikmjhbgkgv1qr4qcbfcb8v5cs9-rcl-5.3.2/include/rcl/rcl/graph.h:48:41
   compiler_int_least64_t* = compiler_int64_t ## Generated based on /usr/include/bits/types.h:58:19
   compiler_gnuc_va_list* = compiler_builtin_va_list ## Generated based on /usr/lib/clang/16/include/stdarg.h:14:27
   struct_rosidl_message_type_support_t* {.pure, inheritable, bycopy.} = object
@@ -709,6 +810,31 @@ type
     data*: pointer
     funcfield*: rosidl_runtime_c_bound_handle_function
 
+  struct_action_msgs_msg_GoalInfo* {.pure, inheritable, bycopy.} = object
+    goal_id*: unique_identifier_msgs_msg_UUID ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_info__struct.h:30:16
+    stamp*: builtin_interfaces_msg_Time
+
+  struct_action_msgs_msg_GoalStatus* {.pure, inheritable, bycopy.} = object
+    goal_info*: action_msgs_msg_GoalInfo ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_status__struct.h:95:16
+    status*: int8
+
+  struct_action_msgs_msg_GoalStatusArray* {.pure, inheritable, bycopy.} = object
+    status_list*: action_msgs_msg_GoalStatus_Sequence ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_status_array__struct.h:28:16
+  
+  struct_action_msgs_srv_CancelGoal_Request* {.pure, inheritable, bycopy.} = object
+    goal_info*: action_msgs_msg_GoalInfo ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/srv/detail/cancel_goal__struct.h:25:16
+  
+  struct_action_msgs_srv_CancelGoal_Response* {.pure, inheritable, bycopy.} = object
+    return_code*: int8       ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/srv/detail/cancel_goal__struct.h:98:16
+    goals_canceling*: action_msgs_msg_GoalInfo_Sequence
+
+  struct_rosidl_action_type_support_t* {.pure, inheritable, bycopy.} = object
+    goal_service_type_support*: ptr rosidl_service_type_support_t ## Generated based on /nix/store/l5n428nlcyhhwzxy3s7albghm1xhss0j-rosidl_runtime_c-3.1.4/include/rosidl_runtime_c/rosidl_runtime_c/action_type_support_struct.h:34:8
+    result_service_type_support*: ptr rosidl_service_type_support_t
+    cancel_service_type_support*: ptr rosidl_service_type_support_t
+    feedback_message_type_support*: ptr rosidl_message_type_support_t
+    status_message_type_support*: ptr rosidl_message_type_support_t
+
   compiler_int64_t* = clong  ## Generated based on /usr/include/bits/types.h:44:25
   rosidl_message_typesupport_handle_function* = proc (
       a0: ptr rosidl_message_type_support_t; a1: cstring): ptr rosidl_message_type_support_t {.
@@ -719,6 +845,27 @@ type
   rosidl_runtime_c_bound_handle_function* = proc (
       a0: ptr rosidl_runtime_c_Sequence_bound; a1: cstring): ptr rosidl_runtime_c_Sequence_bound {.
       cdecl.}                ## Generated based on /nix/store/l5n428nlcyhhwzxy3s7albghm1xhss0j-rosidl_runtime_c-3.1.4/include/rosidl_runtime_c/rosidl_runtime_c/sequence_bound.h:28:54
+  unique_identifier_msgs_msg_UUID* = struct_unique_identifier_msgs_msg_UUID ## Generated based on /nix/store/w5mdr4zk3id0ah32yfr9rwfrs0bf622h-unique_identifier_msgs-2.2.1/include/unique_identifier_msgs/unique_identifier_msgs/msg/detail/uuid__struct.h:30:3
+  builtin_interfaces_msg_Time* = struct_builtin_interfaces_msg_Time ## Generated based on /nix/store/49l36n0xv8l9zp2k0zr9h4wvpqibbiqv-builtin_interfaces-1.2.1/include/builtin_interfaces/builtin_interfaces/msg/detail/time__struct.h:31:3
+  action_msgs_msg_GoalStatus_Sequence* = struct_action_msgs_msg_GoalStatus_Sequence ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_status__struct.h:111:3
+  action_msgs_msg_GoalInfo_Sequence* = struct_action_msgs_msg_GoalInfo_Sequence ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_info__struct.h:45:3
+  struct_unique_identifier_msgs_msg_UUID* {.pure, inheritable, bycopy.} = object
+    uuid*: array[16'i64, uint8] ## Generated based on /nix/store/w5mdr4zk3id0ah32yfr9rwfrs0bf622h-unique_identifier_msgs-2.2.1/include/unique_identifier_msgs/unique_identifier_msgs/msg/detail/uuid__struct.h:27:16
+  
+  struct_builtin_interfaces_msg_Time* {.pure, inheritable, bycopy.} = object
+    sec*: int32              ## Generated based on /nix/store/49l36n0xv8l9zp2k0zr9h4wvpqibbiqv-builtin_interfaces-1.2.1/include/builtin_interfaces/builtin_interfaces/msg/detail/time__struct.h:25:16
+    nanosec*: uint32
+
+  struct_action_msgs_msg_GoalStatus_Sequence* {.pure, inheritable, bycopy.} = object
+    data*: ptr action_msgs_msg_GoalStatus ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_status__struct.h:104:16
+    size*: csize_t
+    capacity*: csize_t
+
+  struct_action_msgs_msg_GoalInfo_Sequence* {.pure, inheritable, bycopy.} = object
+    data*: ptr action_msgs_msg_GoalInfo ## Generated based on /nix/store/i9p3hg9fwpjaj5s2nf43dw8jgls6yn85-action_msgs-1.2.1/include/action_msgs/action_msgs/msg/detail/goal_info__struct.h:38:16
+    size*: csize_t
+    capacity*: csize_t
+
 when 0 is static:
   const
     RCUTILS_RET_OK* = 0      ## Generated based on /nix/store/7d317fh17jfd2pymkvpyxdl9x8sdlcns-rcutils-5.1.2/include/rcutils/rcutils/types/rcutils_ret.h:29:9
@@ -1245,6 +1392,67 @@ proc rcutils_get_error_state*(): ptr rcutils_error_state_t {.cdecl,
 proc rcutils_get_error_string*(): rcutils_error_string_t {.cdecl,
     importc: "rcutils_get_error_string".}
 proc rcutils_reset_error*(): void {.cdecl, importc: "rcutils_reset_error".}
+when 2000 is static:
+  const
+    RCL_RET_ACTION_NAME_INVALID* = 2000 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:38:9
+else:
+  let RCL_RET_ACTION_NAME_INVALID* = 2000 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:38:9
+when 2100 is static:
+  const
+    RCL_RET_ACTION_GOAL_ACCEPTED* = 2100 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:40:9
+else:
+  let RCL_RET_ACTION_GOAL_ACCEPTED* = 2100 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:40:9
+when 2101 is static:
+  const
+    RCL_RET_ACTION_GOAL_REJECTED* = 2101 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:42:9
+else:
+  let RCL_RET_ACTION_GOAL_REJECTED* = 2101 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:42:9
+when 2102 is static:
+  const
+    RCL_RET_ACTION_CLIENT_INVALID* = 2102 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:44:9
+else:
+  let RCL_RET_ACTION_CLIENT_INVALID* = 2102 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:44:9
+when 2103 is static:
+  const
+    RCL_RET_ACTION_CLIENT_TAKE_FAILED* = 2103 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:46:9
+else:
+  let RCL_RET_ACTION_CLIENT_TAKE_FAILED* = 2103 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:46:9
+when 2200 is static:
+  const
+    RCL_RET_ACTION_SERVER_INVALID* = 2200 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:48:9
+else:
+  let RCL_RET_ACTION_SERVER_INVALID* = 2200 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:48:9
+when 2201 is static:
+  const
+    RCL_RET_ACTION_SERVER_TAKE_FAILED* = 2201 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:50:9
+else:
+  let RCL_RET_ACTION_SERVER_TAKE_FAILED* = 2201 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:50:9
+when 2300 is static:
+  const
+    RCL_RET_ACTION_GOAL_HANDLE_INVALID* = 2300 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:52:9
+else:
+  let RCL_RET_ACTION_GOAL_HANDLE_INVALID* = 2300 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:52:9
+when 2301 is static:
+  const
+    RCL_RET_ACTION_GOAL_EVENT_INVALID* = 2301 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:54:9
+else:
+  let RCL_RET_ACTION_GOAL_EVENT_INVALID* = 2301 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:54:9
+when 16 is static:
+  const
+    UUID_SIZE* = 16          ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:57:9
+else:
+  let UUID_SIZE* = 16        ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:57:9
+when 7 is static:
+  const
+    GOAL_STATE_NUM_STATES* = 7 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:95:9
+else:
+  let GOAL_STATE_NUM_STATES* = 7 ## Generated based on /nix/store/p41mz3d8wy53pyxh2h7j11brhafqj3rw-rcl_action-5.3.2/include/rcl_action/rcl_action/types.h:95:9
+proc rmw_get_zero_initialized_names_and_types*(): rmw_names_and_types_t {.cdecl,
+    importc: "rmw_get_zero_initialized_names_and_types".}
+proc rmw_topic_endpoint_info_array_fini*(
+    topic_endpoint_info_array: ptr rmw_topic_endpoint_info_array_t;
+    allocator: ptr rcutils_allocator_t): rmw_ret_t {.cdecl,
+    importc: "rmw_topic_endpoint_info_array_fini".}
 proc rcutils_get_zero_initialized_allocator*(): rcutils_allocator_t {.cdecl,
     importc: "rcutils_get_zero_initialized_allocator".}
 proc rcutils_allocator_is_valid*(allocator: ptr rcutils_allocator_t): bool {.
@@ -2380,3 +2588,364 @@ proc rcl_yaml_node_struct_get*(node_name: cstring; param_name: cstring;
     cdecl, importc: "rcl_yaml_node_struct_get".}
 proc rcl_yaml_node_struct_print*(params_st: ptr rcl_params_t): void {.cdecl,
     importc: "rcl_yaml_node_struct_print".}
+var goal_state_descriptions* {.importc: "goal_state_descriptions".}: ptr UncheckedArray[
+    cstring]
+var goal_event_descriptions* {.importc: "goal_event_descriptions".}: ptr UncheckedArray[
+    cstring]
+proc rcl_action_get_zero_initialized_goal_info*(): rcl_action_goal_info_t {.
+    cdecl, importc: "rcl_action_get_zero_initialized_goal_info".}
+proc rcl_action_get_zero_initialized_goal_status_array*(): rcl_action_goal_status_array_t {.
+    cdecl, importc: "rcl_action_get_zero_initialized_goal_status_array".}
+proc rcl_action_get_zero_initialized_cancel_request*(): rcl_action_cancel_request_t {.
+    cdecl, importc: "rcl_action_get_zero_initialized_cancel_request".}
+proc rcl_action_get_zero_initialized_cancel_response*(): rcl_action_cancel_response_t {.
+    cdecl, importc: "rcl_action_get_zero_initialized_cancel_response".}
+proc rcl_action_goal_status_array_init*(status_array: ptr rcl_action_goal_status_array_t;
+                                        num_status: csize_t;
+                                        allocator: rcl_allocator_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_goal_status_array_init".}
+proc rcl_action_goal_status_array_fini*(status_array: ptr rcl_action_goal_status_array_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_goal_status_array_fini".}
+proc rcl_action_cancel_response_init*(cancel_response: ptr rcl_action_cancel_response_t;
+                                      num_goals_canceling: csize_t;
+                                      allocator: rcl_allocator_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_cancel_response_init".}
+proc rcl_action_cancel_response_fini*(cancel_response: ptr rcl_action_cancel_response_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_cancel_response_fini".}
+proc rcl_action_get_zero_initialized_client*(): rcl_action_client_t {.cdecl,
+    importc: "rcl_action_get_zero_initialized_client".}
+proc rcl_action_client_init*(action_client: ptr rcl_action_client_t;
+                             node: ptr rcl_node_t;
+                             type_support: ptr rosidl_action_type_support_t;
+                             action_name: cstring;
+                             options: ptr rcl_action_client_options_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_client_init".}
+proc rcl_action_client_fini*(action_client: ptr rcl_action_client_t;
+                             node: ptr rcl_node_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_client_fini".}
+proc rcl_action_client_get_default_options*(): rcl_action_client_options_t {.
+    cdecl, importc: "rcl_action_client_get_default_options".}
+proc rcl_action_server_is_available*(node: ptr rcl_node_t;
+                                     client: ptr rcl_action_client_t;
+                                     is_available: ptr bool): rcl_ret_t {.cdecl,
+    importc: "rcl_action_server_is_available".}
+proc rcl_action_send_goal_request*(action_client: ptr rcl_action_client_t;
+                                   ros_goal_request: pointer;
+                                   sequence_number: ptr int64): rcl_ret_t {.
+    cdecl, importc: "rcl_action_send_goal_request".}
+proc rcl_action_take_goal_response*(action_client: ptr rcl_action_client_t;
+                                    response_header: ptr rmw_request_id_t;
+                                    ros_goal_response: pointer): rcl_ret_t {.
+    cdecl, importc: "rcl_action_take_goal_response".}
+proc rcl_action_take_feedback*(action_client: ptr rcl_action_client_t;
+                               ros_feedback: pointer): rcl_ret_t {.cdecl,
+    importc: "rcl_action_take_feedback".}
+proc rcl_action_take_status*(action_client: ptr rcl_action_client_t;
+                             ros_status_array: pointer): rcl_ret_t {.cdecl,
+    importc: "rcl_action_take_status".}
+proc rcl_action_send_result_request*(action_client: ptr rcl_action_client_t;
+                                     ros_result_request: pointer;
+                                     sequence_number: ptr int64): rcl_ret_t {.
+    cdecl, importc: "rcl_action_send_result_request".}
+proc rcl_action_take_result_response*(action_client: ptr rcl_action_client_t;
+                                      response_header: ptr rmw_request_id_t;
+                                      ros_result: pointer): rcl_ret_t {.cdecl,
+    importc: "rcl_action_take_result_response".}
+proc rcl_action_send_cancel_request*(action_client: ptr rcl_action_client_t;
+                                     ros_cancel_request: pointer;
+                                     sequence_number: ptr int64): rcl_ret_t {.
+    cdecl, importc: "rcl_action_send_cancel_request".}
+proc rcl_action_take_cancel_response*(action_client: ptr rcl_action_client_t;
+                                      response_header: ptr rmw_request_id_t;
+                                      ros_cancel_response: pointer): rcl_ret_t {.
+    cdecl, importc: "rcl_action_take_cancel_response".}
+proc rcl_action_client_get_action_name*(action_client: ptr rcl_action_client_t): cstring {.
+    cdecl, importc: "rcl_action_client_get_action_name".}
+proc rcl_action_client_get_options*(action_client: ptr rcl_action_client_t): ptr rcl_action_client_options_t {.
+    cdecl, importc: "rcl_action_client_get_options".}
+proc rcl_action_client_is_valid*(action_client: ptr rcl_action_client_t): bool {.
+    cdecl, importc: "rcl_action_client_is_valid".}
+proc rcl_action_client_set_goal_client_callback*(
+    action_client: ptr rcl_action_client_t; callback: rcl_event_callback_t;
+    user_data: pointer): rcl_ret_t {.cdecl, importc: "rcl_action_client_set_goal_client_callback".}
+proc rcl_action_client_set_cancel_client_callback*(
+    action_client: ptr rcl_action_client_t; callback: rcl_event_callback_t;
+    user_data: pointer): rcl_ret_t {.cdecl, importc: "rcl_action_client_set_cancel_client_callback".}
+proc rcl_action_client_set_result_client_callback*(
+    action_client: ptr rcl_action_client_t; callback: rcl_event_callback_t;
+    user_data: pointer): rcl_ret_t {.cdecl, importc: "rcl_action_client_set_result_client_callback".}
+proc rcl_action_client_set_feedback_subscription_callback*(
+    action_client: ptr rcl_action_client_t; callback: rcl_event_callback_t;
+    user_data: pointer): rcl_ret_t {.cdecl, importc: "rcl_action_client_set_feedback_subscription_callback".}
+proc rcl_action_client_set_status_subscription_callback*(
+    action_client: ptr rcl_action_client_t; callback: rcl_event_callback_t;
+    user_data: pointer): rcl_ret_t {.cdecl, importc: "rcl_action_client_set_status_subscription_callback".}
+proc rcl_action_transition_goal_state*(state: rcl_action_goal_state_t;
+                                       event: rcl_action_goal_event_t): rcl_action_goal_state_t {.
+    cdecl, importc: "rcl_action_transition_goal_state".}
+proc rcl_action_get_zero_initialized_goal_handle*(): rcl_action_goal_handle_t {.
+    cdecl, importc: "rcl_action_get_zero_initialized_goal_handle".}
+proc rcl_action_goal_handle_init*(goal_handle: ptr rcl_action_goal_handle_t;
+                                  goal_info: ptr rcl_action_goal_info_t;
+                                  allocator: rcl_allocator_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_goal_handle_init".}
+proc rcl_action_goal_handle_fini*(goal_handle: ptr rcl_action_goal_handle_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_goal_handle_fini".}
+proc rcl_action_update_goal_state*(goal_handle: ptr rcl_action_goal_handle_t;
+                                   goal_event: rcl_action_goal_event_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_update_goal_state".}
+proc rcl_action_goal_handle_get_info*(goal_handle: ptr rcl_action_goal_handle_t;
+                                      goal_info: ptr rcl_action_goal_info_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_goal_handle_get_info".}
+proc rcl_action_goal_handle_get_status*(goal_handle: ptr rcl_action_goal_handle_t;
+                                        status: ptr rcl_action_goal_state_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_goal_handle_get_status".}
+proc rcl_action_goal_handle_is_active*(goal_handle: ptr rcl_action_goal_handle_t): bool {.
+    cdecl, importc: "rcl_action_goal_handle_is_active".}
+proc rcl_action_goal_handle_is_cancelable*(
+    goal_handle: ptr rcl_action_goal_handle_t): bool {.cdecl,
+    importc: "rcl_action_goal_handle_is_cancelable".}
+proc rcl_action_goal_handle_is_valid*(goal_handle: ptr rcl_action_goal_handle_t): bool {.
+    cdecl, importc: "rcl_action_goal_handle_is_valid".}
+proc rcl_action_get_zero_initialized_server*(): rcl_action_server_t {.cdecl,
+    importc: "rcl_action_get_zero_initialized_server".}
+proc rcl_action_server_init*(action_server: ptr rcl_action_server_t;
+                             node: ptr rcl_node_t; clock: ptr rcl_clock_t;
+                             type_support: ptr rosidl_action_type_support_t;
+                             action_name: cstring;
+                             options: ptr rcl_action_server_options_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_server_init".}
+proc rcl_action_server_fini*(action_server: ptr rcl_action_server_t;
+                             node: ptr rcl_node_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_server_fini".}
+proc rcl_action_server_get_default_options*(): rcl_action_server_options_t {.
+    cdecl, importc: "rcl_action_server_get_default_options".}
+proc rcl_action_take_goal_request*(action_server: ptr rcl_action_server_t;
+                                   request_header: ptr rmw_request_id_t;
+                                   ros_goal_request: pointer): rcl_ret_t {.
+    cdecl, importc: "rcl_action_take_goal_request".}
+proc rcl_action_send_goal_response*(action_server: ptr rcl_action_server_t;
+                                    response_header: ptr rmw_request_id_t;
+                                    ros_goal_response: pointer): rcl_ret_t {.
+    cdecl, importc: "rcl_action_send_goal_response".}
+proc rcl_action_accept_new_goal*(action_server: ptr rcl_action_server_t;
+                                 goal_info: ptr rcl_action_goal_info_t): ptr rcl_action_goal_handle_t {.
+    cdecl, importc: "rcl_action_accept_new_goal".}
+proc rcl_action_publish_feedback*(action_server: ptr rcl_action_server_t;
+                                  ros_feedback: pointer): rcl_ret_t {.cdecl,
+    importc: "rcl_action_publish_feedback".}
+proc rcl_action_get_goal_status_array*(action_server: ptr rcl_action_server_t;
+    status_message: ptr rcl_action_goal_status_array_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_get_goal_status_array".}
+proc rcl_action_publish_status*(action_server: ptr rcl_action_server_t;
+                                status_message: pointer): rcl_ret_t {.cdecl,
+    importc: "rcl_action_publish_status".}
+proc rcl_action_take_result_request*(action_server: ptr rcl_action_server_t;
+                                     request_header: ptr rmw_request_id_t;
+                                     ros_result_request: pointer): rcl_ret_t {.
+    cdecl, importc: "rcl_action_take_result_request".}
+proc rcl_action_send_result_response*(action_server: ptr rcl_action_server_t;
+                                      response_header: ptr rmw_request_id_t;
+                                      ros_result_response: pointer): rcl_ret_t {.
+    cdecl, importc: "rcl_action_send_result_response".}
+proc rcl_action_expire_goals*(action_server: ptr rcl_action_server_t;
+                              expired_goals: ptr rcl_action_goal_info_t;
+                              expired_goals_capacity: csize_t;
+                              num_expired: ptr csize_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_expire_goals".}
+proc rcl_action_notify_goal_done*(action_server: ptr rcl_action_server_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_notify_goal_done".}
+proc rcl_action_take_cancel_request*(action_server: ptr rcl_action_server_t;
+                                     request_header: ptr rmw_request_id_t;
+                                     ros_cancel_request: pointer): rcl_ret_t {.
+    cdecl, importc: "rcl_action_take_cancel_request".}
+proc rcl_action_process_cancel_request*(action_server: ptr rcl_action_server_t;
+    cancel_request: ptr rcl_action_cancel_request_t; cancel_response: ptr rcl_action_cancel_response_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_process_cancel_request".}
+proc rcl_action_send_cancel_response*(action_server: ptr rcl_action_server_t;
+                                      response_header: ptr rmw_request_id_t;
+                                      ros_cancel_response: pointer): rcl_ret_t {.
+    cdecl, importc: "rcl_action_send_cancel_response".}
+proc rcl_action_server_get_action_name*(action_server: ptr rcl_action_server_t): cstring {.
+    cdecl, importc: "rcl_action_server_get_action_name".}
+proc rcl_action_server_get_options*(action_server: ptr rcl_action_server_t): ptr rcl_action_server_options_t {.
+    cdecl, importc: "rcl_action_server_get_options".}
+proc rcl_action_server_get_goal_handles*(action_server: ptr rcl_action_server_t;
+    goal_handles: ptr ptr ptr rcl_action_goal_handle_t; num_goals: ptr csize_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_server_get_goal_handles".}
+proc rcl_action_server_goal_exists*(action_server: ptr rcl_action_server_t;
+                                    goal_info: ptr rcl_action_goal_info_t): bool {.
+    cdecl, importc: "rcl_action_server_goal_exists".}
+proc rcl_action_server_is_valid*(action_server: ptr rcl_action_server_t): bool {.
+    cdecl, importc: "rcl_action_server_is_valid".}
+proc rcl_action_server_is_valid_except_context*(
+    action_server: ptr rcl_action_server_t): bool {.cdecl,
+    importc: "rcl_action_server_is_valid_except_context".}
+proc rcl_action_server_set_goal_service_callback*(
+    action_server: ptr rcl_action_server_t; callback: rcl_event_callback_t;
+    user_data: pointer): rcl_ret_t {.cdecl, importc: "rcl_action_server_set_goal_service_callback".}
+proc rcl_action_server_set_cancel_service_callback*(
+    action_server: ptr rcl_action_server_t; callback: rcl_event_callback_t;
+    user_data: pointer): rcl_ret_t {.cdecl, importc: "rcl_action_server_set_cancel_service_callback".}
+proc rcl_action_server_set_result_service_callback*(
+    action_server: ptr rcl_action_server_t; callback: rcl_event_callback_t;
+    user_data: pointer): rcl_ret_t {.cdecl, importc: "rcl_action_server_set_result_service_callback".}
+var rcl_action_qos_profile_status_default*: rmw_qos_profile_t
+proc rmw_names_and_types_check_zero*(names_and_types: ptr rmw_names_and_types_t): rmw_ret_t {.
+    cdecl, importc: "rmw_names_and_types_check_zero".}
+proc rmw_names_and_types_init*(names_and_types: ptr rmw_names_and_types_t;
+                               size: csize_t; allocator: ptr rcutils_allocator_t): rmw_ret_t {.
+    cdecl, importc: "rmw_names_and_types_init".}
+proc rmw_names_and_types_fini*(names_and_types: ptr rmw_names_and_types_t): rmw_ret_t {.
+    cdecl, importc: "rmw_names_and_types_fini".}
+proc rmw_get_topic_names_and_types*(node: ptr rmw_node_t;
+                                    allocator: ptr rcutils_allocator_t;
+                                    no_demangle: bool; topic_names_and_types: ptr rmw_names_and_types_t): rmw_ret_t {.
+    cdecl, importc: "rmw_get_topic_names_and_types".}
+proc rmw_get_zero_initialized_topic_endpoint_info*(): rmw_topic_endpoint_info_t {.
+    cdecl, importc: "rmw_get_zero_initialized_topic_endpoint_info".}
+proc rmw_topic_endpoint_info_fini*(topic_endpoint_info: ptr rmw_topic_endpoint_info_t;
+                                   allocator: ptr rcutils_allocator_t): rmw_ret_t {.
+    cdecl, importc: "rmw_topic_endpoint_info_fini".}
+proc rmw_topic_endpoint_info_set_topic_type*(
+    topic_endpoint_info: ptr rmw_topic_endpoint_info_t; topic_type: cstring;
+    allocator: ptr rcutils_allocator_t): rmw_ret_t {.cdecl,
+    importc: "rmw_topic_endpoint_info_set_topic_type".}
+proc rmw_topic_endpoint_info_set_node_name*(
+    topic_endpoint_info: ptr rmw_topic_endpoint_info_t; node_name: cstring;
+    allocator: ptr rcutils_allocator_t): rmw_ret_t {.cdecl,
+    importc: "rmw_topic_endpoint_info_set_node_name".}
+proc rmw_topic_endpoint_info_set_node_namespace*(
+    topic_endpoint_info: ptr rmw_topic_endpoint_info_t; node_namespace: cstring;
+    allocator: ptr rcutils_allocator_t): rmw_ret_t {.cdecl,
+    importc: "rmw_topic_endpoint_info_set_node_namespace".}
+proc rmw_topic_endpoint_info_set_endpoint_type*(
+    topic_endpoint_info: ptr rmw_topic_endpoint_info_t;
+    typearg: rmw_endpoint_type_t): rmw_ret_t {.cdecl,
+    importc: "rmw_topic_endpoint_info_set_endpoint_type".}
+proc rmw_topic_endpoint_info_set_gid*(topic_endpoint_info: ptr rmw_topic_endpoint_info_t;
+                                      gid: ptr uint8; size: csize_t): rmw_ret_t {.
+    cdecl, importc: "rmw_topic_endpoint_info_set_gid".}
+proc rmw_topic_endpoint_info_set_qos_profile*(
+    topic_endpoint_info: ptr rmw_topic_endpoint_info_t;
+    qos_profile: ptr rmw_qos_profile_t): rmw_ret_t {.cdecl,
+    importc: "rmw_topic_endpoint_info_set_qos_profile".}
+proc rmw_get_zero_initialized_topic_endpoint_info_array*(): rmw_topic_endpoint_info_array_t {.
+    cdecl, importc: "rmw_get_zero_initialized_topic_endpoint_info_array".}
+proc rmw_topic_endpoint_info_array_check_zero*(
+    topic_endpoint_info_array: ptr rmw_topic_endpoint_info_array_t): rmw_ret_t {.
+    cdecl, importc: "rmw_topic_endpoint_info_array_check_zero".}
+proc rmw_topic_endpoint_info_array_init_with_size*(
+    topic_endpoint_info_array: ptr rmw_topic_endpoint_info_array_t;
+    size: csize_t; allocator: ptr rcutils_allocator_t): rmw_ret_t {.cdecl,
+    importc: "rmw_topic_endpoint_info_array_init_with_size".}
+proc rcl_get_publisher_names_and_types_by_node*(node: ptr rcl_node_t;
+    allocator: ptr rcl_allocator_t; no_demangle: bool; node_name: cstring;
+    node_namespace: cstring; topic_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.
+    cdecl, importc: "rcl_get_publisher_names_and_types_by_node".}
+proc rcl_get_subscriber_names_and_types_by_node*(node: ptr rcl_node_t;
+    allocator: ptr rcl_allocator_t; no_demangle: bool; node_name: cstring;
+    node_namespace: cstring; topic_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.
+    cdecl, importc: "rcl_get_subscriber_names_and_types_by_node".}
+proc rcl_get_service_names_and_types_by_node*(node: ptr rcl_node_t;
+    allocator: ptr rcl_allocator_t; node_name: cstring; node_namespace: cstring;
+    service_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.cdecl,
+    importc: "rcl_get_service_names_and_types_by_node".}
+proc rcl_get_client_names_and_types_by_node*(node: ptr rcl_node_t;
+    allocator: ptr rcl_allocator_t; node_name: cstring; node_namespace: cstring;
+    service_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.cdecl,
+    importc: "rcl_get_client_names_and_types_by_node".}
+proc rcl_get_topic_names_and_types*(node: ptr rcl_node_t;
+                                    allocator: ptr rcl_allocator_t;
+                                    no_demangle: bool; topic_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.
+    cdecl, importc: "rcl_get_topic_names_and_types".}
+proc rcl_get_service_names_and_types*(node: ptr rcl_node_t;
+                                      allocator: ptr rcl_allocator_t;
+    service_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.cdecl,
+    importc: "rcl_get_service_names_and_types".}
+proc rcl_names_and_types_init*(names_and_types: ptr rcl_names_and_types_t;
+                               size: csize_t; allocator: ptr rcl_allocator_t): rcl_ret_t {.
+    cdecl, importc: "rcl_names_and_types_init".}
+proc rcl_names_and_types_fini*(names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.
+    cdecl, importc: "rcl_names_and_types_fini".}
+proc rcl_get_node_names*(node: ptr rcl_node_t; allocator: rcl_allocator_t;
+                         node_names: ptr rcutils_string_array_t;
+                         node_namespaces: ptr rcutils_string_array_t): rcl_ret_t {.
+    cdecl, importc: "rcl_get_node_names".}
+proc rcl_get_node_names_with_enclaves*(node: ptr rcl_node_t;
+                                       allocator: rcl_allocator_t;
+                                       node_names: ptr rcutils_string_array_t;
+    node_namespaces: ptr rcutils_string_array_t;
+                                       enclaves: ptr rcutils_string_array_t): rcl_ret_t {.
+    cdecl, importc: "rcl_get_node_names_with_enclaves".}
+proc rcl_count_publishers*(node: ptr rcl_node_t; topic_name: cstring;
+                           count: ptr csize_t): rcl_ret_t {.cdecl,
+    importc: "rcl_count_publishers".}
+proc rcl_count_subscribers*(node: ptr rcl_node_t; topic_name: cstring;
+                            count: ptr csize_t): rcl_ret_t {.cdecl,
+    importc: "rcl_count_subscribers".}
+proc rcl_wait_for_publishers*(node: ptr rcl_node_t;
+                              allocator: ptr rcl_allocator_t;
+                              topic_name: cstring; count: csize_t;
+                              timeout: rcutils_duration_value_t;
+                              success: ptr bool): rcl_ret_t {.cdecl,
+    importc: "rcl_wait_for_publishers".}
+proc rcl_wait_for_subscribers*(node: ptr rcl_node_t;
+                               allocator: ptr rcl_allocator_t;
+                               topic_name: cstring; count: csize_t;
+                               timeout: rcutils_duration_value_t;
+                               success: ptr bool): rcl_ret_t {.cdecl,
+    importc: "rcl_wait_for_subscribers".}
+proc rcl_get_publishers_info_by_topic*(node: ptr rcl_node_t;
+                                       allocator: ptr rcutils_allocator_t;
+                                       topic_name: cstring; no_mangle: bool;
+    publishers_info: ptr rcl_topic_endpoint_info_array_t): rcl_ret_t {.cdecl,
+    importc: "rcl_get_publishers_info_by_topic".}
+proc rcl_get_subscriptions_info_by_topic*(node: ptr rcl_node_t;
+    allocator: ptr rcutils_allocator_t; topic_name: cstring; no_mangle: bool;
+    subscriptions_info: ptr rcl_topic_endpoint_info_array_t): rcl_ret_t {.cdecl,
+    importc: "rcl_get_subscriptions_info_by_topic".}
+proc rcl_service_server_is_available*(node: ptr rcl_node_t;
+                                      client: ptr rcl_client_t;
+                                      is_available: ptr bool): rcl_ret_t {.
+    cdecl, importc: "rcl_service_server_is_available".}
+proc rcl_action_get_client_names_and_types_by_node*(node: ptr rcl_node_t;
+    allocator: ptr rcl_allocator_t; node_name: cstring; node_namespace: cstring;
+    action_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_get_client_names_and_types_by_node".}
+proc rcl_action_get_server_names_and_types_by_node*(node: ptr rcl_node_t;
+    allocator: ptr rcl_allocator_t; node_name: cstring; node_namespace: cstring;
+    action_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_get_server_names_and_types_by_node".}
+proc rcl_action_get_names_and_types*(node: ptr rcl_node_t;
+                                     allocator: ptr rcl_allocator_t;
+    action_names_and_types: ptr rcl_names_and_types_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_get_names_and_types".}
+proc rcl_action_wait_set_add_action_client*(wait_set: ptr rcl_wait_set_t;
+    action_client: ptr rcl_action_client_t; client_index: ptr csize_t;
+    subscription_index: ptr csize_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_wait_set_add_action_client".}
+proc rcl_action_wait_set_add_action_server*(wait_set: ptr rcl_wait_set_t;
+    action_server: ptr rcl_action_server_t; service_index: ptr csize_t): rcl_ret_t {.
+    cdecl, importc: "rcl_action_wait_set_add_action_server".}
+proc rcl_action_client_wait_set_get_num_entities*(
+    action_client: ptr rcl_action_client_t; num_subscriptions: ptr csize_t;
+    num_guard_conditions: ptr csize_t; num_timers: ptr csize_t;
+    num_clients: ptr csize_t; num_services: ptr csize_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_client_wait_set_get_num_entities".}
+proc rcl_action_server_wait_set_get_num_entities*(
+    action_server: ptr rcl_action_server_t; num_subscriptions: ptr csize_t;
+    num_guard_conditions: ptr csize_t; num_timers: ptr csize_t;
+    num_clients: ptr csize_t; num_services: ptr csize_t): rcl_ret_t {.cdecl,
+    importc: "rcl_action_server_wait_set_get_num_entities".}
+proc rcl_action_client_wait_set_get_entities_ready*(
+    wait_set: ptr rcl_wait_set_t; action_client: ptr rcl_action_client_t;
+    is_feedback_ready: ptr bool; is_status_ready: ptr bool;
+    is_goal_response_ready: ptr bool; is_cancel_response_ready: ptr bool;
+    is_result_response_ready: ptr bool): rcl_ret_t {.cdecl,
+    importc: "rcl_action_client_wait_set_get_entities_ready".}
+proc rcl_action_server_wait_set_get_entities_ready*(
+    wait_set: ptr rcl_wait_set_t; action_server: ptr rcl_action_server_t;
+    is_goal_request_ready: ptr bool; is_cancel_request_ready: ptr bool;
+    is_result_request_ready: ptr bool; is_goal_expired: ptr bool): rcl_ret_t {.
+    cdecl, importc: "rcl_action_server_wait_set_get_entities_ready".}
