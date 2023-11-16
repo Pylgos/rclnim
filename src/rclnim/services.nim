@@ -1,4 +1,4 @@
-import "."/[rcl, errors, handles, waitsets, nodes, qosprofiles, typesupports, rosinterfaces, utils, typesupports]
+import "."/[rcl, errors, handles, waitsets, nodes, qosprofiles, typesupports, rosinterfaces, utils]
 import concurrent/smartptrs
 import std/[locks, options]
 
