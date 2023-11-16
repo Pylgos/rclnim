@@ -58,7 +58,7 @@ genHelperMethods(ServiceTypesupport, requestVTable, T.Request, encodeRequest, de
 genHelperMethods(ServiceTypesupport, responseVTable, T.Response, encodeResponse, decodeResponse, createResponse, deleteResponse)
 
 genHelperMethods(ActionTypesupport, sendGoalRequestVTable, SendGoalRequest[T], encodeSendGoalRequest, decodeSendGoalRequest, createSendGoalRequest, deleteSendGoalRequest)
-genHelperMethods(ActionTypesupport, sendGoalResponseVTable, SendGoalRequest[T], encodeSendGoalRequest, decodeSendGoalRequest, createSendGoalRequest, deleteSendGoalRequest)
-genHelperMethods(ActionTypesupport, getResultRequestVTable, SendGoalRequest[T], encodeSendGoalRequest, decodeSendGoalRequest, createSendGoalRequest, deleteSendGoalRequest)
-genHelperMethods(ActionTypesupport, getResultResponseVTable, SendGoalRequest[T], encodeSendGoalRequest, decodeSendGoalRequest, createSendGoalRequest, deleteSendGoalRequest)
-genHelperMethods(ActionTypesupport, feedbackVTable, SendGoalRequest[T], encodeSendGoalRequest, decodeSendGoalRequest, createSendGoalRequest, deleteSendGoalRequest)
+genHelperMethods(ActionTypesupport, sendGoalResponseVTable, SendGoalResponse, encodeSendGoalResponse, decodeSendGoalResponse, createSendGoalResponse, deleteSendGoalResponse)
+genHelperMethods(ActionTypesupport, getResultRequestVTable, GetResultRequest, encodeGetResultRequest, decodeGetResultRequest, createGetResultRequest, deleteGetResultRequest)
+genHelperMethods(ActionTypesupport, getResultResponseVTable, GetResultResponse[T], encodeGetResultResponse, decodeGetResultResponse, createGetResultResponse, deleteGetResultResponse)
+genHelperMethods(ActionTypesupport, feedbackVTable, Feedback[T], encodeFeedback, decodeFeedback, createFeedback, deleteFeedback)

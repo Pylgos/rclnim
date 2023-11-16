@@ -1,8 +1,9 @@
 import ./[rcl, handles, contexts, nodes, errors, utils, typesupports, rosinterfaces, waitsets, rosinterfaceimporters]
 import ./private/actioninternaltypes
-import std/[locks, options]
+import std/[locks, options, random]
 import concurrent/smartptrs
 importInterface action_msgs/msg/goal_info
+importInterface unique_identifier_msgs/msg/uuid
 
 
 type
@@ -62,27 +63,43 @@ proc cancelResponseWaitable*(self: ActionClientBase | ActionClient): Waitable =
 proc resultResponseWaitable*(self: ActionClientBase | ActionClient): Waitable =
   self[].resultResponseWaitable
 
+proc generateUUID(): UUID =
+  var rng = initRand()
+  for i in 0..<result.uuid.len:
+    result.uuid[i] = rng.rand(uint8)
+
 proc sendGoal*[T](self: ActionClient[T], goal: T.Goal): GoalResponseRecv[T] =
   var req = SendGoalRequest[T](
-      
+    uuid: generateUUID(),
     goal: goal
   )
-  var rosReq = self.
-  nimMessageToC(goal, cReq)
+  var rosReq = self.typesupport.encodeSendGoalRequest(goal)
   var num: int64 = 0
-  wrapError rcl_action_send_goal_request(self.handle.getRclClient(), addr cReq, addr num)
+  wrapError rcl_action_send_goal_request(self.handle.getRclClient(), rosReq, addr num)
   GoalResponseRecv[T](
     actionClient: self,
     sequenceNum: int64)
 
-proc takeResponse*[T](recv: GoalResponseRecv[T]): Option[Option[GoalHandle[T]]] =
+proc takeGoalResponse*[T](recv: GoalResponseRecv[T]): Option[GoalHandle[T]] =
   var
-    cResp = default(GoalInfo.CType)
     respHeader: rmw_request_id_t
+    rosResp = recv.actionClient[].typesupport.createSendGoalResponse()
+    ret: rcl_ret_t
   withLock self.actionClient.handle.getLock():
     withLock getRclGlobalLock():
-      wrapError rcl_action_take_goal_response(recv.actionClient.handle.getRclActionClient(), addr respHeader, cResp)
-  
+      ret = rcl_action_take_goal_response(recv.actionClient.handle.getRclActionClient(), addr respHeader, rosResp)
+  doAssert respHeader.request_id.sequence_number == self.sequenceNum
+  case ret
+  of RCL_RET_OK:
+    let resp = recv.actionClient[].typesupport.decodeSendGoalResponse(rosResp)
+    true
+  of RCL_RET_CLIENT_TAKE_FAILED:
+    recv.actionClient[].typesupport.deleteSendGoalResponse(rosResp)
+    false
+  else:
+    recv.actionClient[].typesupport.deleteSendGoalResponse(rosResp)
+    wrapError ret
+    unreachable()
 
 # import ./rosinterfaceimporters
 importInterface nav2_msgs/action/compute_path_through_poses
